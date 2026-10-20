@@ -199,12 +199,30 @@
                     <h2 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
                         <i data-lucide="user" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Jadwal Mengajar Guru
                     </h2>
-                    <p class="text-[11px] text-slate-500">Jam berurutan di kelas yang sama otomatis digabung rapi</p>
+                    <p class="text-[11px] text-slate-500">Filter berdasarkan hari atau tampilkan semua jadwal minggu ini</p>
                 </div>
-                <div class="w-full md:w-auto">
-                    <select id="select-guru-filter" onchange="renderTeacherSchedule()" class="w-full md:w-64 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
-                        <!-- Teachers List -->
-                    </select>
+                
+                <div class="grid grid-cols-2 sm:flex items-center gap-2 w-full md:w-auto">
+                    <!-- Filter Hari -->
+                    <div class="col-span-1">
+                        <label class="block text-[10px] font-semibold text-slate-500 mb-0.5 sm:hidden">Hari:</label>
+                        <select id="select-hari-guru" onchange="renderTeacherSchedule()" class="w-full border border-slate-300 rounded-xl px-2.5 py-2.5 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                            <option value="SEMUA">Semua Hari</option>
+                            <option value="SENIN">SENIN</option>
+                            <option value="SELASA">SELASA</option>
+                            <option value="RABU">RABU</option>
+                            <option value="KAMIS">KAMIS</option>
+                            <option value="JUMAT">JUMAT</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter Guru -->
+                    <div class="col-span-1">
+                        <label class="block text-[10px] font-semibold text-slate-500 mb-0.5 sm:hidden">Guru:</label>
+                        <select id="select-guru-filter" onchange="renderTeacherSchedule()" class="w-full sm:w-64 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                            <!-- Teachers List -->
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -218,16 +236,16 @@
                 <div class="overflow-x-auto touch-scroll">
                     <table class="w-full text-xs text-left min-w-[500px]">
                         <thead>
-                            <tr class="bg-slate-100 text-slate-700 uppercase text-[11px] font-bold border-b text-center">
-                                <th class="p-2.5 w-20">Hari</th>
+                            <tr class="bg-slate-800 text-white uppercase text-[11px] font-bold border-b text-center">
+                                <th class="p-2.5 w-24">Hari</th>
                                 <th class="p-2.5 w-28">Waktu</th>
-                                <th class="p-2.5 w-24">Jam Ke</th>
+                                <th class="p-2.5 w-28">Jam Ke</th>
                                 <th class="p-2.5 w-20">Kelas</th>
                                 <th class="p-2.5 text-left">Mata Pelajaran</th>
                                 <th class="p-2.5 w-24">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-guru-schedule" class="divide-y divide-slate-100">
+                        <tbody id="tbody-guru-schedule">
                             <!-- Filled dynamically -->
                         </tbody>
                     </table>
@@ -290,14 +308,14 @@
                     <table class="w-full text-xs text-left min-w-[480px]">
                         <thead>
                             <tr class="bg-slate-800 text-white font-bold text-center">
-                                <th class="p-2 border border-slate-700 w-20">HARI</th>
+                                <th class="p-2 border border-slate-700 w-24">HARI</th>
                                 <th class="p-2 border border-slate-700 w-28 whitespace-nowrap">WAKTU</th>
-                                <th class="p-2 border border-slate-700 w-16">JAM KE</th>
+                                <th class="p-2 border border-slate-700 w-24">JAM KE</th>
                                 <th class="p-2 border border-slate-700 text-left">MATA PELAJARAN</th>
                                 <th class="p-2 border border-slate-700 text-left">GURU PENGAJAR</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-kelas-schedule" class="divide-y divide-slate-200">
+                        <tbody id="tbody-kelas-schedule">
                             <!-- Filled dynamically -->
                         </tbody>
                     </table>
@@ -522,11 +540,19 @@
     <!-- Script Application Logic -->
     <script>
         const DAY_COLOR_CLASSES = {
-            'SENIN': 'bg-blue-100 text-blue-900 border-blue-300 font-bold',
-            'SELASA': 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold',
-            'RABU': 'bg-amber-100 text-amber-900 border-amber-300 font-bold',
-            'KAMIS': 'bg-purple-100 text-purple-900 border-purple-300 font-bold',
-            'JUMAT': 'bg-rose-100 text-rose-900 border-rose-300 font-bold'
+            'SENIN': 'bg-blue-600 text-white font-extrabold border-blue-700 shadow-sm',
+            'SELASA': 'bg-emerald-600 text-white font-extrabold border-emerald-700 shadow-sm',
+            'RABU': 'bg-amber-500 text-slate-950 font-extrabold border-amber-600 shadow-sm',
+            'KAMIS': 'bg-purple-600 text-white font-extrabold border-purple-700 shadow-sm',
+            'JUMAT': 'bg-rose-600 text-white font-extrabold border-rose-700 shadow-sm'
+        };
+
+        const DAY_ROW_CLASSES = {
+            'SENIN': 'bg-blue-100/70 hover:bg-blue-200/80 text-blue-950',
+            'SELASA': 'bg-emerald-100/70 hover:bg-emerald-200/80 text-emerald-950',
+            'RABU': 'bg-amber-100/70 hover:bg-amber-200/80 text-amber-950',
+            'KAMIS': 'bg-purple-100/70 hover:bg-purple-200/80 text-purple-950',
+            'JUMAT': 'bg-rose-100/70 hover:bg-rose-200/80 text-rose-950'
         };
 
         const DEFAULT_TEACHERS = {
@@ -963,8 +989,10 @@
             });
         }
 
+        // Render Tab 2: Teacher Schedule (Filter Hari & Blok Warna)
         function renderTeacherSchedule() {
             const guruCode = document.getElementById('select-guru-filter').value;
+            const selectedDay = document.getElementById('select-hari-guru') ? document.getElementById('select-hari-guru').value : 'SEMUA';
             const teacher = TEACHERS[guruCode] || { name: '-', subject: '-' };
             const tbody = document.getElementById('tbody-guru-schedule');
             tbody.innerHTML = '';
@@ -976,12 +1004,11 @@
             days.forEach(day => {
                 const dayRows = RAW_SCHEDULE.filter(r => r.day === day);
                 
-                const classEntries = {};
+                const teacherSlots = [];
                 dayRows.forEach(row => {
                     CLASSES.forEach(cls => {
                         if (row.map[cls] === guruCode) {
-                            if (!classEntries[cls]) classEntries[cls] = [];
-                            classEntries[cls].push({
+                            teacherSlots.push({
                                 day: day,
                                 time: row.time,
                                 period: row.period,
@@ -991,58 +1018,55 @@
                     });
                 });
 
-                CLASSES.forEach(cls => {
-                    if (classEntries[cls]) {
-                        const entries = classEntries[cls];
-                        let i = 0;
-                        while (i < entries.length) {
-                            const curr = entries[i];
+                let i = 0;
+                while (i < teacherSlots.length) {
+                    const curr = teacherSlots[i];
+                    totalJP++;
+                    
+                    const parts = curr.time.split(/[-–]/);
+                    let startT = parts[0] ? parts[0].trim() : curr.time;
+                    let endT = parts[1] ? parts[1].trim() : curr.time;
+                    
+                    const periods = [curr.period];
+                    let j = i + 1;
+                    
+                    while (j < teacherSlots.length) {
+                        const pPrev = parseInt(teacherSlots[j-1].period, 10) || -1;
+                        const pCurr = parseInt(teacherSlots[j].period, 10) || -2;
+                        
+                        if (teacherSlots[j].kelas === curr.kelas && pCurr === pPrev + 1) {
                             totalJP++;
-                            
-                            const parts = curr.time.split(/[-–]/);
-                            let startT = parts[0] ? parts[0].trim() : curr.time;
-                            let endT = parts[1] ? parts[1].trim() : curr.time;
-                            
-                            const periods = [curr.period];
-                            let j = i + 1;
-                            
-                            while (j < entries.length) {
-                                const pPrev = parseInt(entries[j-1].period, 10) || -1;
-                                const pCurr = parseInt(entries[j].period, 10) || -2;
-                                
-                                if (pCurr === pPrev + 1) {
-                                    totalJP++;
-                                    const tjParts = entries[j].time.split(/[-–]/);
-                                    if (tjParts.length > 1) endT = tjParts[1].trim();
-                                    periods.push(entries[j].period);
-                                    j++;
-                                } else {
-                                    break;
-                                }
-                            }
-
-                            const periodStr = periods.length > 1 ? `Jam ${periods[0]} - ${periods[periods.length - 1]}` : (periods[0] ? `Jam ${periods[0]}` : '-');
-                            const timeStr = `${startT} - ${endT}`;
-
-                            scheduleList.push({
-                                day: day,
-                                time: timeStr,
-                                period: periodStr,
-                                kelas: cls,
-                                subject: teacher.subject,
-                                jpCount: periods.length
-                            });
-
-                            i = j;
+                            const tjParts = teacherSlots[j].time.split(/[-–]/);
+                            if (tjParts.length > 1) endT = tjParts[1].trim();
+                            periods.push(teacherSlots[j].period);
+                            j++;
+                        } else {
+                            break;
                         }
                     }
-                });
+
+                    const periodStr = periods.length > 1 ? `Jam ${periods[0]} - ${periods[periods.length - 1]}` : (periods[0] ? `Jam ${periods[0]}` : '-');
+                    const timeStr = `${startT} - ${endT}`;
+
+                    if (selectedDay === 'SEMUA' || selectedDay === day) {
+                        scheduleList.push({
+                            day: day,
+                            time: timeStr,
+                            period: periodStr,
+                            kelas: curr.kelas,
+                            subject: teacher.subject
+                        });
+                    }
+
+                    i = j;
+                }
             });
 
+            // Update Info Card Guru
             const isWali = Object.keys(HOMEROOMS).find(k => HOMEROOMS[k] === guruCode);
             document.getElementById('teacher-info-card').innerHTML = `
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-yellow-400 text-indigo-950 font-black text-lg flex items-center justify-center shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-yellow-400 text-indigo-950 font-black text-lg flex items-center justify-center shrink-0 shadow-md">
                         ${guruCode}
                     </div>
                     <div>
@@ -1050,32 +1074,52 @@
                         <p class="text-[11px] text-indigo-200">Mapel: <span class="font-semibold text-white">${teacher.subject}</span> ${isWali ? `| Wali Kelas ${isWali}` : ''}</p>
                     </div>
                 </div>
-                <div class="bg-indigo-800 px-3 py-1.5 rounded-xl text-center border border-indigo-700 shrink-0 self-end sm:self-auto">
+                <div class="bg-indigo-800/80 backdrop-blur px-3 py-1.5 rounded-xl text-center border border-indigo-700 shrink-0 self-end sm:self-auto shadow-inner">
                     <span class="text-xl font-black text-yellow-300">${totalJP}</span>
                     <span class="text-[10px] block text-indigo-200 font-medium">Jam / Minggu</span>
                 </div>
             `;
 
             if (scheduleList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Tidak ada jadwal mengajar untuk guru ini.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400 font-medium">Tidak ada jadwal mengajar untuk guru ini${selectedDay !== 'SEMUA' ? ' pada hari ' + selectedDay : ''}.</td></tr>`;
                 return;
             }
 
+            // Hitung jumlah baris per hari untuk Rowspan
+            const dayCounts = {};
             scheduleList.forEach(item => {
-                const dayColorClass = DAY_COLOR_CLASSES[item.day] || 'bg-slate-100 text-slate-800';
+                dayCounts[item.day] = (dayCounts[item.day] || 0) + 1;
+            });
+
+            const renderedDays = new Set();
+
+            scheduleList.forEach((item) => {
+                const dayBadgeClass = DAY_COLOR_CLASSES[item.day] || 'bg-slate-100 text-slate-800';
+                const dayRowClass = DAY_ROW_CLASSES[item.day] || 'bg-slate-50';
+
+                const isFirstRowOfDay = !renderedDays.has(item.day);
+                const borderClass = isFirstRowOfDay ? 'border-t-2 border-slate-300' : 'border-t border-slate-200/80';
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 border-b";
+                tr.className = `${dayRowClass} ${borderClass} transition-colors`;
+
+                let dayTdHTML = '';
+                if (isFirstRowOfDay) {
+                    renderedDays.add(item.day);
+                    const count = dayCounts[item.day];
+                    dayTdHTML = `<td rowspan="${count}" class="p-2.5 text-center align-middle bg-white/60 backdrop-blur-sm border-r border-slate-300/80 font-bold">
+                        <span class="inline-block px-3 py-1.5 rounded-xl border shadow-sm text-xs ${dayBadgeClass}">${item.day}</span>
+                    </td>`;
+                }
+
                 tr.innerHTML = `
+                    ${dayTdHTML}
+                    <td class="p-2.5 font-mono text-[11px] text-slate-700 text-center whitespace-nowrap font-medium">${formatTimeStr(item.time)}</td>
+                    <td class="p-2.5 font-bold text-slate-800 text-center whitespace-nowrap">${item.period}</td>
+                    <td class="p-2.5 text-center"><span class="bg-indigo-900 text-white font-bold px-2.5 py-1 rounded-xl text-[11px] whitespace-nowrap shadow-sm">Kelas ${item.kelas}</span></td>
+                    <td class="p-2.5 font-bold text-slate-800 text-left">${item.subject}</td>
                     <td class="p-2.5 text-center">
-                        <span class="inline-block px-2.5 py-0.5 rounded-lg border text-[11px] ${dayColorClass}">${item.day}</span>
-                    </td>
-                    <td class="p-2.5 font-mono text-[11px] text-slate-600 text-center whitespace-nowrap">${formatTimeStr(item.time)}</td>
-                    <td class="p-2.5 font-bold text-slate-700 text-center whitespace-nowrap">${item.period}</td>
-                    <td class="p-2.5 text-center"><span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-lg text-[11px] whitespace-nowrap">Kelas ${item.kelas}</span></td>
-                    <td class="p-2.5 font-semibold text-slate-800 text-left">${item.subject}</td>
-                    <td class="p-2.5 text-center">
-                        <button onclick="prepareJournalFromSchedule('${guruCode}', '${item.kelas}', '${item.period} (${formatTimeStr(item.time)})')" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 mx-auto transition active:scale-95 shadow-sm">
+                        <button onclick="prepareJournalFromSchedule('${guruCode}', '${item.kelas}', '${item.period} (${formatTimeStr(item.time)})')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 mx-auto transition active:scale-95 shadow">
                             <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Isi Jurnal
                         </button>
                     </td>
@@ -1085,6 +1129,7 @@
             lucide.createIcons();
         }
 
+        // Render Tab 3: Class Schedule (Filter Hari & Blok Warna)
         function renderClassSchedule() {
             const selectedClass = document.getElementById('select-kelas-filter').value;
             const selectedDay = document.getElementById('select-hari-kelas').value;
@@ -1104,26 +1149,102 @@
                 </div>
             `;
 
-            let filteredSchedule = RAW_SCHEDULE;
+            let days = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT'];
             if (selectedDay !== 'SEMUA') {
-                filteredSchedule = RAW_SCHEDULE.filter(r => r.day === selectedDay);
+                days = [selectedDay];
             }
 
-            filteredSchedule.forEach(row => {
-                const code = row.map[selectedClass] || '-';
-                const teacher = TEACHERS[code];
-                const dayColorClass = DAY_COLOR_CLASSES[row.day] || 'bg-slate-100 text-slate-800';
+            const scheduleList = [];
+
+            days.forEach(day => {
+                const dayRows = RAW_SCHEDULE.filter(r => r.day === day);
+                if (!dayRows.length) return;
+
+                const classSlots = [];
+                dayRows.forEach(row => {
+                    const code = row.map[selectedClass] || '-';
+                    classSlots.push({
+                        day: day,
+                        time: row.time,
+                        period: row.period,
+                        code: code
+                    });
+                });
+
+                let i = 0;
+                while (i < classSlots.length) {
+                    const curr = classSlots[i];
+                    const parts = curr.time.split(/[-–]/);
+                    let startT = parts[0] ? parts[0].trim() : curr.time;
+                    let endT = parts[1] ? parts[1].trim() : curr.time;
+
+                    const periods = [curr.period];
+                    let j = i + 1;
+
+                    while (j < classSlots.length) {
+                        const pPrev = parseInt(classSlots[j-1].period, 10) || -1;
+                        const pCurr = parseInt(classSlots[j].period, 10) || -2;
+
+                        if (classSlots[j].code === curr.code && pCurr === pPrev + 1) {
+                            const tjParts = classSlots[j].time.split(/[-–]/);
+                            if (tjParts.length > 1) endT = tjParts[1].trim();
+                            periods.push(classSlots[j].period);
+                            j++;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    const periodStr = periods.length > 1 ? `Jam ${periods[0]} - ${periods[periods.length - 1]}` : (periods[0] ? `Jam ${periods[0]}` : '-');
+                    const timeStr = `${startT} - ${endT}`;
+                    const teacher = TEACHERS[curr.code];
+
+                    scheduleList.push({
+                        day: day,
+                        time: timeStr,
+                        period: periodStr,
+                        code: curr.code,
+                        subject: teacher ? teacher.subject : curr.code,
+                        teacherName: teacher ? `${teacher.name} (${curr.code})` : '-'
+                    });
+
+                    i = j;
+                }
+            });
+
+            // Hitung jumlah baris per hari untuk Rowspan
+            const dayCounts = {};
+            scheduleList.forEach(item => {
+                dayCounts[item.day] = (dayCounts[item.day] || 0) + 1;
+            });
+
+            const renderedDays = new Set();
+
+            scheduleList.forEach(item => {
+                const dayBadgeClass = DAY_COLOR_CLASSES[item.day] || 'bg-slate-100 text-slate-800';
+                const dayRowClass = DAY_ROW_CLASSES[item.day] || 'bg-slate-50';
+
+                const isFirstRowOfDay = !renderedDays.has(item.day);
+                const borderClass = isFirstRowOfDay ? 'border-t-2 border-slate-300' : 'border-t border-slate-200/80';
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 border-b text-center";
+                tr.className = `${dayRowClass} ${borderClass} transition-colors text-center`;
+
+                let dayTdHTML = '';
+                if (isFirstRowOfDay) {
+                    renderedDays.add(item.day);
+                    const count = dayCounts[item.day];
+                    dayTdHTML = `<td rowspan="${count}" class="p-2.5 border-r border-slate-300/80 align-middle bg-white/60 backdrop-blur-sm font-bold">
+                        <span class="inline-block px-2.5 py-1 rounded-xl border text-[10px] shadow-sm ${dayBadgeClass}">${item.day}</span>
+                    </td>`;
+                }
+
                 tr.innerHTML = `
-                    <td class="p-2 border">
-                        <span class="inline-block px-2 py-0.5 rounded text-[10px] border ${dayColorClass}">${row.day}</span>
-                    </td>
-                    <td class="p-2 border font-mono text-slate-600 text-[11px] whitespace-nowrap">${formatTimeStr(row.time)}</td>
-                    <td class="p-2 border font-semibold">${row.period}</td>
-                    <td class="p-2 border font-bold text-indigo-900 text-left">${teacher ? teacher.subject : code}</td>
-                    <td class="p-2 border text-slate-700 text-[11px] text-left">${teacher ? `${teacher.name} (${code})` : '-'}</td>
+                    ${dayTdHTML}
+                    <td class="p-2 border font-mono text-slate-700 text-[11px] font-medium whitespace-nowrap">${formatTimeStr(item.time)}</td>
+                    <td class="p-2 border font-bold text-slate-800 whitespace-nowrap">${item.period}</td>
+                    <td class="p-2 border font-bold text-indigo-900 text-left">${item.subject}</td>
+                    <td class="p-2 border text-slate-800 font-medium text-[11px] text-left">${item.teacherName}</td>
                 `;
                 tbody.appendChild(tr);
             });
