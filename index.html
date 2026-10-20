@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <!-- Viewport Dioptimalkan untuk Zoom In / Out Bebas di HP -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
+    <title>Aplikasi Jadwal & Jurnal Mengajar - SMPN 3 Besuki</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SheetJS (XLSX Parser & Exporter) CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        /* CSS Khusus Sentuhan & Scrolling HP */
+        html, body {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Smooth Horizontal Touch Scroll */
+        .touch-scroll {
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+
+        /* Hide scrollbar for clean mobile tabs */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #print-section, #print-section * { visibility: visible; }
+            #print-section { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header / Navbar HP Friendly -->
+    <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-3 py-3 flex flex-col gap-3">
+            
+            <!-- Top Bar: Logo & Title -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 bg-indigo-700 rounded-xl shadow-inner shrink-0">
+                        <i data-lucide="book-open-check" class="w-6 h-6 text-yellow-400"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base sm:text-lg font-bold tracking-wide leading-tight">SMPN 3 BESUKI</h1>
+                        <p class="text-[11px] text-indigo-200 flex items-center gap-1.5">
+                            <span class="truncate">Jadwal & Jurnal</span>
+                            <span id="label-tahun-pelajaran" class="bg-indigo-800 px-1.5 py-0.5 rounded text-yellow-300 font-semibold text-[10px]">TP 2026/2027</span>
+                        </p>
+                    </div>
+                </div>
+
+                <button onclick="openUploadModal()" class="px-2.5 py-2 bg-amber-500 hover:bg-amber-600 text-indigo-950 font-bold rounded-xl text-xs flex items-center gap-1 shadow transition shrink-0 active:scale-95">
+                    <i data-lucide="file-up" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Upload Excel</span>
+                </button>
+            </div>
+
+            <!-- Scrollable Nav Tabs for Mobile -->
+            <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 text-xs">
+                <button onclick="switchTab('jadwal-master')" id="btn-jadwal-master" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-600 text-white font-semibold shrink-0 transition active:scale-95">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Master
+                </button>
+                <button onclick="switchTab('jadwal-guru')" id="btn-jadwal-guru" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
+                    <i data-lucide="user-check" class="w-4 h-4"></i> Jadwal Guru
+                </button>
+                <button onclick="switchTab('jadwal-kelas')" id="btn-jadwal-kelas" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i> Jadwal Kelas
+                </button>
+                <button onclick="switchTab('jurnal-input')" id="btn-jurnal-input" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
+                    <i data-lucide="pen-tool" class="w-4 h-4"></i> Isi Jurnal
+                </button>
+                <button onclick="switchTab('jurnal-rekap')" id="btn-jurnal-rekap" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Rekap Jurnal
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Modal Upload Excel Jadwal -->
+    <div id="upload-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-5 space-y-4 border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-600"></i>
+                    <h3 class="text-base font-bold text-slate-800">Upload File Jadwal Excel</h3>
+                </div>
+                <button onclick="closeUploadModal()" class="text-slate-400 hover:text-slate-600 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Pilih file Excel jadwal mengajar baru (`.xlsx` atau `.xls`). Sistem akan otomatis mendeteksi <b>Tahun Pelajaran</b>, <b>Guru</b>, <b>Wali Kelas</b>, dan <b>Jadwal</b>.
+            </p>
+
+            <div class="border-2 border-dashed border-indigo-200 bg-indigo-50/50 rounded-xl p-5 text-center space-y-2">
+                <i data-lucide="upload-cloud" class="w-8 h-8 text-indigo-500 mx-auto"></i>
+                <div>
+                    <label for="excel-file-input" class="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold inline-block shadow transition active:scale-95">
+                        Pilih File Excel
+                    </label>
+                    <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="hidden" onchange="handleExcelUpload(event)">
+                </div>
+                <p id="upload-file-name" class="text-xs text-slate-500 font-medium truncate">Belum ada file dipilih</p>
+            </div>
+
+            <div class="flex justify-between items-center pt-2 border-t gap-2">
+                <button onclick="resetToDefaultSchedule()" class="text-xs text-rose-600 hover:underline font-semibold flex items-center gap-1 py-1">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Default
+                </button>
+                <button onclick="closeUploadModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 flex-grow w-full">
+
+        <!-- TAB 1: JADWAL MASTER -->
+        <section id="tab-jadwal-master" class="tab-content space-y-3">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="grid" class="w-5 h-5 text-indigo-600"></i> Master Jadwal Mingguan
+                    </h2>
+                    <p class="text-[11px] text-slate-500">Cubit layar HP untuk Zoom In / Out jika tampilan terasa kecil</p>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <label class="text-xs font-semibold text-slate-600 shrink-0">Hari:</label>
+                    <select id="select-hari-master" onchange="renderMasterSchedule()" class="w-full sm:w-auto border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                        <option value="SENIN">SENIN</option>
+                        <option value="SELASA">SELASA</option>
+                        <option value="RABU">RABU</option>
+                        <option value="KAMIS">KAMIS</option>
+                        <option value="JUMAT">JUMAT</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Petunjuk Geser Layar Mobile -->
+            <div class="sm:hidden flex items-center gap-1.5 text-[11px] text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                <i data-lucide="move-horizontal" class="w-4 h-4 shrink-0"></i>
+                <span>Geser tabel ke kanan/kiri untuk melihat kelas lain.</span>
+            </div>
+
+            <!-- Schedule Table Container -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto touch-scroll">
+                    <table class="w-full text-xs text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="bg-indigo-900 text-white text-center">
+                                <th class="p-2 border border-indigo-800 w-20">WAKTU</th>
+                                <th class="p-2 border border-indigo-800 w-12">JAM</th>
+                                <th class="p-2 border border-indigo-800" colspan="4">KELAS VII</th>
+                                <th class="p-2 border border-indigo-800" colspan="4">KELAS VIII</th>
+                                <th class="p-2 border border-indigo-800" colspan="4">KELAS IX</th>
+                            </tr>
+                            <tr class="bg-indigo-800 text-white text-center font-bold">
+                                <th class="p-1 border border-indigo-700"></th>
+                                <th class="p-1 border border-indigo-700"></th>
+                                <th class="p-1.5 border border-indigo-700 w-12">A</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">B</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">C</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">D</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">A</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">B</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">C</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">D</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">A</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">B</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">C</th>
+                                <th class="p-1.5 border border-indigo-700 w-12">D</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-master-schedule" class="divide-y divide-slate-200">
+                            <!-- Filled dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Legend Guru & Mapel -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-xs font-bold text-slate-800 mb-2.5 flex items-center gap-1.5">
+                    <i data-lucide="users" class="w-4 h-4 text-indigo-600"></i> Kode Guru & Mata Pelajaran
+                </h3>
+                <div id="grid-kode-guru" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-xs">
+                    <!-- Dynamic Legend -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: JADWAL PER GURU -->
+        <section id="tab-jadwal-guru" class="tab-content hidden space-y-3">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="user" class="w-5 h-5 text-indigo-600"></i> Jadwal Mengajar Guru
+                    </h2>
+                    <p class="text-[11px] text-slate-500">Warna blok berbeda di setiap hari mengajar</p>
+                </div>
+                <div class="w-full md:w-auto">
+                    <select id="select-guru-filter" onchange="renderTeacherSchedule()" class="w-full md:w-64 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                        <!-- Teachers List -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Teacher Detail Card -->
+            <div id="teacher-info-card" class="bg-indigo-900 text-white p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <!-- Dynamic Teacher Info -->
+            </div>
+
+            <!-- Teacher Schedule List -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4">
+                <div class="overflow-x-auto touch-scroll">
+                    <table class="w-full text-xs text-left min-w-[500px]">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 uppercase text-[11px] font-bold border-b">
+                                <th class="p-2.5">Hari</th>
+                                <th class="p-2.5">Waktu</th>
+                                <th class="p-2.5">Jam Ke</th>
+                                <th class="p-2.5">Kelas</th>
+                                <th class="p-2.5">Mata Pelajaran</th>
+                                <th class="p-2.5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-guru-schedule" class="divide-y divide-slate-100">
+                            <!-- Filled dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: JADWAL PER KELAS -->
+        <section id="tab-jadwal-kelas" class="tab-content hidden space-y-3">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="school" class="w-5 h-5 text-indigo-600"></i> Jadwal Pelajaran Per Kelas
+                    </h2>
+                    <p class="text-[11px] text-slate-500">Pilih hari & kelas, serta unduh file Excel langsung dari HP</p>
+                </div>
+                
+                <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+                    <!-- Filter Hari -->
+                    <div class="col-span-1">
+                        <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Hari:</label>
+                        <select id="select-hari-kelas" onchange="renderClassSchedule()" class="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                            <option value="SEMUA">Semua Hari</option>
+                            <option value="SENIN">SENIN</option>
+                            <option value="SELASA">SELASA</option>
+                            <option value="RABU">RABU</option>
+                            <option value="KAMIS">KAMIS</option>
+                            <option value="JUMAT">JUMAT</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter Kelas -->
+                    <div class="col-span-1">
+                        <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Kelas:</label>
+                        <select id="select-kelas-filter" onchange="renderClassSchedule()" class="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-bold text-emerald-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                            <!-- Class List -->
+                        </select>
+                    </div>
+
+                    <!-- Download Buttons -->
+                    <div class="col-span-2 sm:col-span-auto flex gap-2 pt-1 sm:pt-0 sm:ml-auto">
+                        <button onclick="downloadClassScheduleExcel()" class="flex-1 sm:flex-none px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-sm transition active:scale-95">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i> Kelas Ini
+                        </button>
+                        <button onclick="downloadAllClassesScheduleExcel()" class="flex-1 sm:flex-none px-3 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-sm transition active:scale-95">
+                            <i data-lucide="files" class="w-3.5 h-3.5"></i> Semua Kelas
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Class Info -->
+            <div id="class-info-card" class="bg-emerald-800 text-white p-3.5 rounded-2xl flex justify-between items-center text-xs">
+                <!-- Class Info filled dynamically -->
+            </div>
+
+            <!-- Class Schedule Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto touch-scroll">
+                    <table class="w-full text-xs text-left min-w-[480px]">
+                        <thead>
+                            <tr class="bg-slate-800 text-white font-bold text-center">
+                                <th class="p-2 border border-slate-700 w-20">HARI</th>
+                                <th class="p-2 border border-slate-700 w-24">WAKTU</th>
+                                <th class="p-2 border border-slate-700 w-14">JAM KE</th>
+                                <th class="p-2 border border-slate-700">MATA PELAJARAN</th>
+                                <th class="p-2 border border-slate-700">GURU PENGAJAR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-kelas-schedule" class="divide-y divide-slate-200">
+                            <!-- Filled dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: INPUT JURNAL MENGAJAR -->
+        <section id="tab-jurnal-input" class="tab-content hidden space-y-3">
+            <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="border-b pb-3 mb-4 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="edit-3" class="w-5 h-5 text-indigo-600"></i> Form Jurnal Mengajar Harian
+                        </h2>
+                        <p class="text-[11px] text-slate-500">Input ringkas & responsif di HP</p>
+                    </div>
+                    <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full">SMPN 3</span>
+                </div>
+
+                <form id="form-jurnal" onsubmit="saveJournalEntry(event)" class="space-y-4">
+                    <!-- Row 1: Informasi Dasar -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal</label>
+                            <input type="date" id="jurnal-tanggal" required class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Guru Pengajar</label>
+                            <select id="jurnal-guru" required onchange="autoFillSubject()" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
+                                <!-- Teachers -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Kelas</label>
+                            <select id="jurnal-kelas" required class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
+                                <!-- Classes -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Jam Ke & Waktu</label>
+                            <input type="text" id="jurnal-jam" placeholder="Jam 1-2 (07.05 - 08.15)" required class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Mata Pelajaran & Status -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Mata Pelajaran</label>
+                            <input type="text" id="jurnal-mapel" required class="w-full border border-slate-300 rounded-xl p-2.5 text-xs bg-slate-50 font-bold text-indigo-900" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Status Kehadiran Guru</label>
+                            <select id="jurnal-status" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
+                                <option value="Hadir (Tatap Muka)">Hadir (Tatap Muka)</option>
+                                <option value="Hadir (Daring / Tugas)">Hadir (Daring / Penugasan)</option>
+                                <option value="Izin / Tugas Luar">Izin / Tugas Luar</option>
+                                <option value="Digantikan Guru Piket">Digantikan Guru Piket</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Metode / Media</label>
+                            <input type="text" id="jurnal-metode" placeholder="Diskusi Kelompok, PPT, LKS" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Presensi Siswa -->
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <h3 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1">
+                            <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i> Kehadiran Siswa
+                        </h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                            <div>
+                                <label class="block text-[11px] text-slate-600 mb-0.5">Hadir</label>
+                                <input type="number" id="jurnal-hadir" value="30" class="w-full border border-slate-300 rounded-xl p-2 font-bold text-emerald-700 text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-600 mb-0.5">Sakit (S)</label>
+                                <input type="number" id="jurnal-sakit" value="0" class="w-full border border-slate-300 rounded-xl p-2 font-bold text-amber-600 text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-600 mb-0.5">Izin (I)</label>
+                                <input type="number" id="jurnal-izin" value="0" class="w-full border border-slate-300 rounded-xl p-2 font-bold text-blue-600 text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-600 mb-0.5">Alpha (A)</label>
+                                <input type="number" id="jurnal-alpha" value="0" class="w-full border border-slate-300 rounded-xl p-2 font-bold text-rose-600 text-xs">
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <label class="block text-[11px] text-slate-600 mb-0.5">Siswa Absen</label>
+                                <input type="text" id="jurnal-absen-detail" placeholder="Nihil / Nama" class="w-full border border-slate-300 rounded-xl p-2 text-xs">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Materi & Catatan Refleksi -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Materi / Sub-Materi</label>
+                            <textarea id="jurnal-materi" rows="3" required placeholder="Tuliskan pokok bahasan..." class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Refleksi</label>
+                            <textarea id="jurnal-catatan" rows="3" placeholder="Catatan kelas, kendala, atau tindak lanjut..." class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-end gap-2 pt-1">
+                        <button type="reset" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition">
+                            Reset
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md flex items-center gap-1.5 transition active:scale-95">
+                            <i data-lucide="save" class="w-4 h-4"></i> Simpan Jurnal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- TAB 5: REKAP & CETAK JURNAL -->
+        <section id="tab-jurnal-rekap" class="tab-content hidden space-y-3">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 no-print">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="folder-check" class="w-5 h-5 text-indigo-600"></i> Rekap Jurnal Mengajar
+                    </h2>
+                    <p class="text-[11px] text-slate-500">Riwayat pembelajaran tersimpan di HP/Browser</p>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button onclick="window.print()" class="flex-1 sm:flex-none px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition active:scale-95">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Cetak PDF
+                    </button>
+                    <button onclick="clearJournalData()" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1 transition">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Printable Layout Container -->
+            <div id="print-section" class="bg-white p-4 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
+                <!-- Header Cetak Kop Sekolah -->
+                <div class="text-center border-b-2 border-slate-900 pb-3 mb-4">
+                    <h3 class="text-xs sm:text-sm font-bold uppercase text-slate-900">PEMERINTAH KABUPATEN SITUBONDO</h3>
+                    <h2 class="text-sm sm:text-lg font-extrabold uppercase text-slate-900">DINAS PENDIDIKAN DAN KEBUDAYAAN</h2>
+                    <h1 class="text-base sm:text-2xl font-black uppercase text-indigo-900">SMP NEGERI 3 BESUKI</h1>
+                    <p class="text-[10px] sm:text-xs text-slate-600">Jl. Demang Setro Besuki, Kab. Situbondo | <span id="print-tahun-label">TP 2026/2027</span></p>
+                    <div class="mt-2 text-xs sm:text-sm font-bold underline uppercase text-slate-800">AGENDA & JURNAL MENGAJAR GURU</div>
+                </div>
+
+                <!-- Table Rekap -->
+                <div class="overflow-x-auto touch-scroll">
+                    <table class="w-full text-xs text-left border-collapse border border-slate-300 min-w-[600px]">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-800 text-center font-bold">
+                                <th class="p-1.5 border border-slate-300 w-8">NO</th>
+                                <th class="p-1.5 border border-slate-300 w-20">TANGGAL</th>
+                                <th class="p-1.5 border border-slate-300 w-32">GURU & MAPEL</th>
+                                <th class="p-1.5 border border-slate-300 w-14">KELAS</th>
+                                <th class="p-1.5 border border-slate-300 w-16">JAM KE</th>
+                                <th class="p-1.5 border border-slate-300">MATERI</th>
+                                <th class="p-1.5 border border-slate-300 w-20">PRESENSI</th>
+                                <th class="p-1.5 border border-slate-300">CATATAN</th>
+                                <th class="p-1.5 border border-slate-300 w-10 no-print">AKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-rekap-jurnal">
+                            <!-- Filled dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Tanda Tangan Cetak -->
+                <div class="mt-8 hidden print:grid grid-cols-2 text-center text-xs text-slate-800">
+                    <div>
+                        <p class="mb-1">Mengetahui,</p>
+                        <p class="font-bold">Kepala SMPN 3 Besuki</p>
+                        <div class="h-14"></div>
+                        <p class="font-bold underline">Drs. Tubias Sugiarto</p>
+                        <p>NIP. 196712061997031003</p>
+                    </div>
+                    <div>
+                        <p class="mb-1">Besuki, <span id="print-date-today"></span></p>
+                        <p class="font-bold">Guru Mata Pelajaran</p>
+                        <div class="h-14"></div>
+                        <p class="font-bold underline">( ............................................ )</p>
+                        <p>NIP. ........................................</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Script Application Logic -->
+    <script>
+        const DAY_COLOR_CLASSES = {
+            'SENIN': 'bg-blue-100 text-blue-900 border-blue-300 font-bold',
+            'SELASA': 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold',
+            'RABU': 'bg-amber-100 text-amber-900 border-amber-300 font-bold',
+            'KAMIS': 'bg-purple-100 text-purple-900 border-purple-300 font-bold',
+            'JUMAT': 'bg-rose-100 text-rose-900 border-rose-300 font-bold'
+        };
+
+        const DEFAULT_TEACHERS = {
+            'A': { name: 'Dra. Suprihatin', subject: 'IPS' },
+            'B': { name: 'Tri Joko, S.Pd.', subject: 'IPS' },
+            'C': { name: 'Retno Manik Adi, S.Pd.', subject: 'BK' },
+            'D': { name: 'Sanhaji, S.Ag.', subject: 'PAI' },
+            'E': { name: 'Surahman, S.Pd.', subject: 'Matematika' },
+            'F': { name: 'Mega Prasetyawati, S.Pd.', subject: 'IPA' },
+            'G': { name: 'Supriyadi, S.Pd.', subject: 'BK' },
+            'H': { name: 'Dwi Safiyatin, S.Pd.', subject: 'Pend. Pancasila' },
+            'I': { name: 'Puji Waluyo, S.Pd.', subject: 'Matematika' },
+            'J': { name: 'Lilin Hariyani, S.Pd.', subject: 'Bahasa Indonesia' },
+            'K': { name: 'Gilang Eko, S.Pd.', subject: 'Olah raga' },
+            'L': { name: 'Yulis Dili Darwati, S.Pd.', subject: 'Bahasa Inggris' },
+            'M': { name: 'Ireke Aristia Santoso, S.Pd.', subject: 'Bahasa Indonesia' },
+            'N': { name: 'Fadrizal Merdhianto, S.Pd.', subject: 'Seni Rupa' },
+            'O': { name: 'Bayu Setiadji, S.Pd.,Gr.', subject: 'IPA' },
+            'P': { name: 'Faridatul Jannah, S.Pd.', subject: 'Bahasa Inggris' },
+            'Q': { name: 'Ummi Salamah Putri Utami, S.Pd.', subject: 'Bahasa Indonesia' },
+            'R': { name: 'Ahmad Fadholi, S.Pd.', subject: 'PAI' },
+            'S': { name: 'Agustin Mahartika S.E', subject: 'Bahasa Madura' },
+            'T': { name: 'Sheila Mery Anggraeni, S.Pd', subject: 'TI' }
+        };
+
+        const CLASSES = [
+            'VII A', 'VII B', 'VII C', 'VII D',
+            'VIII A', 'VIII B', 'VIII C', 'VIII D',
+            'IX A', 'IX B', 'IX C', 'IX D'
+        ];
+
+        const DEFAULT_HOMEROOMS = {
+            'VII A': 'A', 'VII B': 'I', 'VII C': 'P', 'VII D': 'M',
+            'VIII A': 'E', 'VIII B': 'K', 'VIII C': 'N', 'VIII D': 'B',
+            'IX A': 'H', 'IX B': 'D', 'IX C': 'Q', 'IX D': 'O'
+        };
+
+        const DEFAULT_RAW_SCHEDULE = [
+            // SENIN
+            { day: 'SENIN', time: '07.05 - 07.40', period: '1', map: {'VII A':'D','VII B':'I','VII C':'M','VII D':'N','VIII A':'K','VIII B':'K','VIII C':'B','VIII D':'F','IX A':'E','IX B':'Q','IX C':'C','IX D':'H'} },
+            { day: 'SENIN', time: '07.40 - 08.15', period: '2', map: {'VII A':'D','VII B':'I','VII C':'M','VII D':'N','VIII A':'K','VIII B':'K','VIII C':'B','VIII D':'F','IX A':'E','IX B':'Q','IX C':'T','IX D':'H'} },
+            { day: 'SENIN', time: '08.15 - 08.50', period: '3', map: {'VII A':'D','VII B':'I','VII C':'M','VII D':'N','VIII A':'K','VIII B':'K','VIII C':'G','VIII D':'F','IX A':'E','IX B':'Q','IX C':'T','IX D':'H'} },
+            { day: 'SENIN', time: '09.15 - 09.50', period: '4', map: {'VII A':'F','VII B':'M','VII C':'A','VII D':'O','VIII A':'E','VIII B':'J','VIII C':'K','VIII D':'K','IX A':'B','IX B':'L','IX C':'H','IX D':'I'} },
+            { day: 'SENIN', time: '09.50 - 10.25', period: '5', map: {'VII A':'F','VII B':'M','VII C':'A','VII D':'O','VIII A':'E','VIII B':'J','VIII C':'K','VIII D':'K','IX A':'B','IX B':'L','IX C':'H','IX D':'I'} },
+            { day: 'SENIN', time: '10.25 - 11.00', period: '6', map: {'VII A':'F','VII B':'M','VII C':'P','VII D':'A','VIII A':'E','VIII B':'J','VIII C':'K','VIII D':'K','IX A':'L','IX B':'O','IX C':'H','IX D':'Q'} },
+            { day: 'SENIN', time: '11.00 - 11.35', period: '7', map: {'VII A':'M','VII B':'D','VII C':'P','VII D':'A','VIII A':'J','VIII B':'G','VIII C':'N','VIII D':'R','IX A':'L','IX B':'O','IX C':'I','IX D':'Q'} },
+            { day: 'SENIN', time: '12.30 - 13.05', period: '8', map: {'VII A':'M','VII B':'D','VII C':'H','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'N','VIII D':'R','IX A':'O','IX B':'T','IX C':'I','IX D':'S'} },
+            { day: 'SENIN', time: '13.05 - 13.40', period: '9', map: {'VII A':'M','VII B':'D','VII C':'H','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'N','VIII D':'R','IX A':'O','IX B':'T','IX C':'I','IX D':'S'} },
+
+            // SELASA
+            { day: 'SELASA', time: '07.05 - 07.40', period: '1', map: {'VII A':'I','VII B':'F','VII C':'O','VII D':'D','VIII A':'R','VIII B':'J','VIII C':'T','VIII D':'N','IX A':'H','IX B':'E','IX C':'K','IX D':'K'} },
+            { day: 'SELASA', time: '07.40 - 08.15', period: '2', map: {'VII A':'I','VII B':'F','VII C':'O','VII D':'D','VIII A':'R','VIII B':'J','VIII C':'T','VIII D':'N','IX A':'H','IX B':'E','IX C':'K','IX D':'K'} },
+            { day: 'SELASA', time: '08.15 - 08.50', period: '3', map: {'VII A':'I','VII B':'F','VII C':'S','VII D':'D','VIII A':'R','VIII B':'J','VIII C':'L','VIII D':'N','IX A':'H','IX B':'B','IX C':'K','IX D':'K'} },
+            { day: 'SELASA', time: '09.15 - 09.50', period: '4', map: {'VII A':'A','VII B':'I','VII C':'S','VII D':'O','VIII A':'E','VIII B':'F','VIII C':'L','VIII D':'G','IX A':'Q','IX B':'B','IX C':'N','IX D':'T'} },
+            { day: 'SELASA', time: '09.50 - 10.25', period: '5', map: {'VII A':'A','VII B':'I','VII C':'D','VII D':'O','VIII A':'E','VIII B':'F','VIII C':'R','VIII D':'J','IX A':'Q','IX B':'H','IX C':'N','IX D':'T'} },
+            { day: 'SELASA', time: '10.25 - 11.00', period: '6', map: {'VII A':'S','VII B':'P','VII C':'D','VII D':'O','VIII A':'F','VIII B':'E','VIII C':'R','VIII D':'J','IX A':'Q','IX B':'H','IX C':'B','IX D':'C'} },
+            { day: 'SELASA', time: '11.00 - 11.35', period: '7', map: {'VII A':'S','VII B':'P','VII C':'D','VII D':'M','VIII A':'F','VIII B':'E','VIII C':'R','VIII D':'J','IX A':'O','IX B':'H','IX C':'B','IX D':'I'} },
+            { day: 'SELASA', time: '12.30 - 13.05', period: '8', map: {'VII A':'H','VII B':'F','VII C':'A','VII D':'M','VIII A':'P','VIII B':'S','VIII C':'B','VIII D':'T','IX A':'O','IX B':'N','IX C':'L','IX D':'I'} },
+            { day: 'SELASA', time: '13.05 - 13.40', period: '9', map: {'VII A':'H','VII B':'F','VII C':'A','VII D':'M','VIII A':'P','VIII B':'S','VIII C':'B','VIII D':'T','IX A':'O','IX B':'N','IX C':'L','IX D':'I'} },
+
+            // RABU
+            { day: 'RABU', time: '07.05 - 07.40', period: '1', map: {'VII A':'T','VII B':'P','VII C':'N','VII D':'I','VIII A':'F','VIII B':'E','VIII C':'J','VIII D':'L','IX A':'K','IX B':'K','IX C':'Q','IX D':'O'} },
+            { day: 'RABU', time: '07.40 - 08.15', period: '2', map: {'VII A':'T','VII B':'P','VII C':'N','VII D':'I','VIII A':'F','VIII B':'E','VIII C':'J','VIII D':'L','IX A':'K','IX B':'K','IX C':'Q','IX D':'O'} },
+            { day: 'RABU', time: '08.15 - 08.50', period: '3', map: {'VII A':'P','VII B':'M','VII C':'N','VII D':'I','VIII A':'F','VIII B':'E','VIII C':'J','VIII D':'S','IX A':'K','IX B':'K','IX C':'Q','IX D':'O'} },
+            { day: 'RABU', time: '09.15 - 09.50', period: '4', map: {'VII A':'P','VII B':'M','VII C':'I','VII D':'T','VIII A':'A','VIII B':'H','VIII C':'L','VIII D':'S','IX A':'E','IX B':'O','IX C':'B','IX D':'Q'} },
+            { day: 'RABU', time: '09.50 - 10.25', period: '5', map: {'VII A':'F','VII B':'M','VII C':'I','VII D':'T','VIII A':'A','VIII B':'H','VIII C':'L','VIII D':'J','IX A':'E','IX B':'O','IX C':'B','IX D':'Q'} },
+            { day: 'RABU', time: '10.25 - 11.00', period: '6', map: {'VII A':'F','VII B':'T','VII C':'I','VII D':'A','VIII A':'H','VIII B':'P','VIII C':'E','VIII D':'J','IX A':'C','IX B':'O','IX C':'S','IX D':'L'} },
+            { day: 'RABU', time: '11.00 - 11.35', period: '7', map: {'VII A':'N','VII B':'T','VII C':'M','VII D':'A','VIII A':'H','VIII B':'P','VIII C':'E','VIII D':'J','IX A':'D','IX B':'Q','IX C':'S','IX D':'L'} },
+            { day: 'RABU', time: '12.30 - 13.05', period: '8', map: {'VII A':'N','VII B':'A','VII C':'M','VII D':'H','VIII A':'P','VIII B':'T','VIII C':'S','VIII D':'E','IX A':'D','IX B':'Q','IX C':'L','IX D':'B'} },
+            { day: 'RABU', time: '13.05 - 13.40', period: '9', map: {'VII A':'N','VII B':'A','VII C':'M','VII D':'H','VIII A':'P','VIII B':'T','VIII C':'S','VIII D':'E','IX A':'D','IX B':'Q','IX C':'L','IX D':'B'} },
+
+            // KAMIS
+            { day: 'KAMIS', time: '07.05 - 07.40', period: '1', map: {'VII A':'M','VII B':'K','VII C':'P','VII D':'K','VIII A':'N','VIII B':'F','VIII C':'J','VIII D':'B','IX A':'L','IX B':'E','IX C':'Q','IX D':'D'} },
+            { day: 'KAMIS', time: '07.40 - 08.15', period: '2', map: {'VII A':'M','VII B':'K','VII C':'P','VII D':'K','VIII A':'N','VIII B':'F','VIII C':'J','VIII D':'B','IX A':'L','IX B':'E','IX C':'Q','IX D':'D'} },
+            { day: 'KAMIS', time: '08.15 - 08.50', period: '3', map: {'VII A':'M','VII B':'K','VII C':'O','VII D':'K','VIII A':'N','VIII B':'F','VIII C':'J','VIII D':'H','IX A':'T','IX B':'E','IX C':'Q','IX D':'D'} },
+            { day: 'KAMIS', time: '09.15 - 09.50', period: '4', map: {'VII A':'I','VII B':'N','VII C':'O','VII D':'M','VIII A':'S','VIII B':'R','VIII C':'E','VIII D':'H','IX A':'T','IX B':'B','IX C':'D','IX D':'L'} },
+            { day: 'KAMIS', time: '09.50 - 10.25', period: '5', map: {'VII A':'I','VII B':'N','VII C':'O','VII D':'M','VIII A':'S','VIII B':'R','VIII C':'E','VIII D':'F','IX A':'Q','IX B':'B','IX C':'D','IX D':'L'} },
+            { day: 'KAMIS', time: '10.25 - 11.00', period: '6', map: {'VII A':'A','VII B':'N','VII C':'I','VII D':'M','VIII A':'T','VIII B':'R','VIII C':'E','VIII D':'F','IX A':'Q','IX B':'S','IX C':'D','IX D':'B'} },
+            { day: 'KAMIS', time: '11.00 - 11.35', period: '7', map: {'VII A':'A','VII B':'G','VII C':'I','VII D':'C','VIII A':'T','VIII B':'N','VIII C':'F','VIII D':'E','IX A':'Q','IX B':'S','IX C':'O','IX D':'B'} },
+            { day: 'KAMIS', time: '12.30 - 13.05', period: '8', map: {'VII A':'P','VII B':'H','VII C':'T','VII D':'I','VIII A':'A','VIII B':'N','VIII C':'F','VIII D':'E','IX A':'S','IX B':'L','IX C':'O','IX D':'Q'} },
+            { day: 'KAMIS', time: '13.05 - 13.40', period: '9', map: {'VII A':'P','VII B':'H','VII C':'T','VII D':'I','VIII A':'A','VIII B':'N','VIII C':'F','VIII D':'E','IX A':'S','IX B':'L','IX C':'O','IX D':'Q'} },
+
+            // JUMAT
+            { day: 'JUMAT', time: '07.40 - 08.15', period: '2', map: {'VII A':'K','VII B':'S','VII C':'K','VII D':'P','VIII A':'G','VIII B':'A','VIII C':'H','VIII D':'L','IX A':'B','IX B':'C','IX C':'O','IX D':'N'} },
+            { day: 'JUMAT', time: '08.15 - 08.50', period: '3', map: {'VII A':'K','VII B':'S','VII C':'K','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'H','VIII D':'L','IX A':'B','IX B':'D','IX C':'O','IX D':'N'} },
+            { day: 'JUMAT', time: '09.35 - 10.10', period: '4', map: {'VII A':'K','VII B':'A','VII C':'K','VII D':'S','VIII A':'J','VIII B':'P','VIII C':'F','VIII D':'B','IX A':'N','IX B':'D','IX C':'I','IX D':'O'} },
+            { day: 'JUMAT', time: '10.10 - 10.45', period: '5', map: {'VII A':'G','VII B':'A','VII C':'C','VII D':'S','VIII A':'J','VIII B':'P','VIII C':'F','VIII D':'B','IX A':'N','IX B':'D','IX C':'I','IX D':'O'} }
+        ];
+
+        // Active State
+        let activeTahunPelajaran = localStorage.getItem('smpn3_tahun_pelajaran') || '2026/2027';
+        let TEACHERS = JSON.parse(localStorage.getItem('smpn3_teachers_db')) || DEFAULT_TEACHERS;
+        let HOMEROOMS = JSON.parse(localStorage.getItem('smpn3_homerooms_db')) || DEFAULT_HOMEROOMS;
+        let RAW_SCHEDULE = JSON.parse(localStorage.getItem('smpn3_schedule_db')) || DEFAULT_RAW_SCHEDULE;
+
+        // Journal Entries Storage
+        let journalEntries = JSON.parse(localStorage.getItem('smpn3_jurnal_db')) || [
+            {
+                id: 1,
+                tanggal: '2026-10-20',
+                guruCode: 'A',
+                guruName: 'Dra. Suprihatin',
+                mapel: 'IPS',
+                kelas: 'VII A',
+                jam: 'Jam 4-5 (09.15 - 10.25)',
+                status: 'Hadir (Tatap Muka)',
+                materi: 'Keberagaman Lingkungan Sekitar dan Interaksi Sosial',
+                metode: 'Diskusi Kelompok & Peta Konsep',
+                hadir: 31, sakit: 1, izin: 0, alpha: 0,
+                detailAbsen: 'Sakit: Ahmad (No. 03)',
+                catatan: 'Siswa aktif berdiskusi kelompok, tugas LKS selesai tepat waktu.'
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateHeaderYearDisplay();
+            refreshAllViews();
+            
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('jurnal-tanggal').value = todayStr;
+            document.getElementById('print-date-today').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        });
+
+        function updateHeaderYearDisplay() {
+            document.getElementById('label-tahun-pelajaran').innerText = `TP ${activeTahunPelajaran}`;
+            document.getElementById('print-tahun-label').innerText = `TP ${activeTahunPelajaran}`;
+        }
+
+        function refreshAllViews() {
+            populateTeacherSelects();
+            populateClassSelects();
+            renderLegend();
+            renderMasterSchedule();
+            renderTeacherSchedule();
+            renderClassSchedule();
+            renderRekapJurnal();
+        }
+
+        function openUploadModal() {
+            document.getElementById('upload-modal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('upload-modal').classList.add('hidden');
+        }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('upload-file-name').innerText = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+                    
+                    parseAndApplyExcelSchedule(rows);
+                    closeUploadModal();
+                    alert(`🎉 Berhasil memperbarui jadwal mengajar TP ${activeTahunPelajaran}!`);
+                } catch (err) {
+                    alert('❌ Gagal membaca file Excel. Pastikan file sesuai format.');
+                    console.error(err);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function parseAndApplyExcelSchedule(rows) {
+            let foundYear = '2026/2027';
+            for (let r = 0; r < Math.min(5, rows.length); r++) {
+                for (let c = 0; c < rows[r].length; c++) {
+                    const cellVal = String(rows[r][c]).toUpperCase();
+                    if (cellVal.includes('TAHUN PELAJARAN')) {
+                        const match = cellVal.match(/\d{4}\/\d{4}/);
+                        if (match) foundYear = match[0];
+                        break;
+                    }
+                }
+            }
+            activeTahunPelajaran = foundYear;
+
+            let teacherHeaderRow = -1;
+            let kodeCol = 16, namaCol = 17, mapelCol = 18;
+
+            for (let r = 0; r < rows.length; r++) {
+                for (let c = 0; c < rows[r].length; c++) {
+                    if (String(rows[r][c]).trim().toUpperCase() === 'NAMA GURU') {
+                        teacherHeaderRow = r;
+                        namaCol = c;
+                        if (c > 0) kodeCol = c - 1;
+                        if (c + 1 < rows[r].length) mapelCol = c + 1;
+                        break;
+                    }
+                }
+                if (teacherHeaderRow !== -1) break;
+            }
+
+            const parsedTeachers = {};
+            if (teacherHeaderRow !== -1) {
+                for (let r = teacherHeaderRow + 1; r < rows.length; r++) {
+                    const row = rows[r];
+                    if (!row) continue;
+                    const code = String(row[kodeCol] || '').trim();
+                    const name = String(row[namaCol] || '').trim();
+                    const subject = String(row[mapelCol] || '').trim();
+
+                    if (code && name && code.toUpperCase() !== 'KODE') {
+                        parsedTeachers[code] = { name, subject };
+                    }
+                }
+            }
+
+            if (Object.keys(parsedTeachers).length > 0) TEACHERS = parsedTeachers;
+
+            const colClassMap = {
+                3: 'VII A', 4: 'VII B', 5: 'VII C', 6: 'VII D',
+                7: 'VIII A', 8: 'VIII B', 9: 'VIII C', 10: 'VIII D',
+                11: 'IX A', 12: 'IX B', 13: 'IX C', 14: 'IX D'
+            };
+
+            const parsedSchedules = [];
+            const parsedHomerooms = {};
+            let currentDay = "";
+
+            for (let r = 0; r < rows.length; r++) {
+                const row = rows[r];
+                if (!row || row.length === 0) continue;
+
+                const col0 = String(row[0] || '').trim().toUpperCase();
+
+                if (['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT'].includes(col0)) {
+                    currentDay = col0;
+                }
+
+                if (col0.includes('WALI KELAS')) {
+                    Object.keys(colClassMap).forEach(colIdx => {
+                        const cls = colClassMap[colIdx];
+                        if (row[colIdx]) {
+                            parsedHomerooms[cls] = String(row[colIdx]).trim();
+                        }
+                    });
+                    continue;
+                }
+
+                if (currentDay) {
+                    const time = String(row[1] || '').trim();
+                    let period = String(row[2] || '').trim();
+                    if (period.endsWith('.0')) period = period.replace('.0', '');
+
+                    const scheduleMap = {};
+                    let rowHasEntries = false;
+
+                    Object.keys(colClassMap).forEach(colIdx => {
+                        const cls = colClassMap[colIdx];
+                        const val = String(row[colIdx] || '').trim();
+                        if (val) {
+                            scheduleMap[cls] = val;
+                            rowHasEntries = true;
+                        }
+                    });
+
+                    if (rowHasEntries && (period || time.includes('-') || String(row[3]).includes('Pembiasaan') || String(row[3]).includes('ISTIRAHAT'))) {
+                        parsedSchedules.push({
+                            day: currentDay,
+                            time: time,
+                            period: period,
+                            map: scheduleMap
+                        });
+                    }
+                }
+            }
+
+            if (parsedSchedules.length > 0) RAW_SCHEDULE = parsedSchedules;
+            if (Object.keys(parsedHomerooms).length > 0) HOMEROOMS = parsedHomerooms;
+
+            localStorage.setItem('smpn3_tahun_pelajaran', activeTahunPelajaran);
+            localStorage.setItem('smpn3_teachers_db', JSON.stringify(TEACHERS));
+            localStorage.setItem('smpn3_homerooms_db', JSON.stringify(HOMEROOMS));
+            localStorage.setItem('smpn3_schedule_db', JSON.stringify(RAW_SCHEDULE));
+
+            updateHeaderYearDisplay();
+            refreshAllViews();
+        }
+
+        function resetToDefaultSchedule() {
+            if (confirm('Kembalikan jadwal ke versi default (TP 2026/2027)?')) {
+                localStorage.removeItem('smpn3_tahun_pelajaran');
+                localStorage.removeItem('smpn3_teachers_db');
+                localStorage.removeItem('smpn3_homerooms_db');
+                localStorage.removeItem('smpn3_schedule_db');
+
+                activeTahunPelajaran = '2026/2027';
+                TEACHERS = DEFAULT_TEACHERS;
+                HOMEROOMS = DEFAULT_HOMEROOMS;
+                RAW_SCHEDULE = DEFAULT_RAW_SCHEDULE;
+
+                updateHeaderYearDisplay();
+                refreshAllViews();
+                closeUploadModal();
+                alert('✅ Jadwal dikembalikan ke default!');
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-indigo-950', 'hover:bg-indigo-800', 'text-indigo-200');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            activeBtn.classList.add('bg-indigo-600', 'text-white');
+            activeBtn.classList.remove('bg-indigo-950', 'hover:bg-indigo-800', 'text-indigo-200');
+        }
+
+        function populateTeacherSelects() {
+            const selectFilter = document.getElementById('select-guru-filter');
+            const selectJurnal = document.getElementById('jurnal-guru');
+            selectFilter.innerHTML = '';
+            selectJurnal.innerHTML = '';
+
+            Object.keys(TEACHERS).forEach(code => {
+                const t = TEACHERS[code];
+                const opt1 = document.createElement('option');
+                opt1.value = code;
+                opt1.textContent = `[${code}] ${t.name} (${t.subject})`;
+                selectFilter.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = code;
+                opt2.textContent = `${t.name} (${t.subject})`;
+                selectJurnal.appendChild(opt2);
+            });
+
+            autoFillSubject();
+        }
+
+        function populateClassSelects() {
+            const selectFilter = document.getElementById('select-kelas-filter');
+            const selectJurnal = document.getElementById('jurnal-kelas');
+            selectFilter.innerHTML = '';
+            selectJurnal.innerHTML = '';
+
+            CLASSES.forEach(c => {
+                const opt1 = document.createElement('option');
+                opt1.value = c;
+                opt1.textContent = `Kelas ${c}`;
+                selectFilter.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = c;
+                opt2.textContent = `Kelas ${c}`;
+                selectJurnal.appendChild(opt2);
+            });
+        }
+
+        function autoFillSubject() {
+            const guruCode = document.getElementById('jurnal-guru').value;
+            if (TEACHERS[guruCode]) {
+                document.getElementById('jurnal-mapel').value = TEACHERS[guruCode].subject;
+            }
+        }
+
+        function renderLegend() {
+            const container = document.getElementById('grid-kode-guru');
+            container.innerHTML = Object.keys(TEACHERS).map(code => `
+                <div class="p-2 bg-slate-50 border rounded-xl flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-indigo-700 text-white font-bold flex items-center justify-center text-xs shrink-0">${code}</span>
+                    <div class="truncate">
+                        <div class="font-bold text-slate-800 truncate text-[11px]">${TEACHERS[code].name}</div>
+                        <div class="text-[10px] text-slate-500">${TEACHERS[code].subject}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderMasterSchedule() {
+            const selectedDay = document.getElementById('select-hari-master').value;
+            const tbody = document.getElementById('tbody-master-schedule');
+            tbody.innerHTML = '';
+
+            const dayRows = RAW_SCHEDULE.filter(r => r.day === selectedDay);
+
+            dayRows.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition text-center";
+
+                let cellsHTML = `
+                    <td class="p-1.5 border font-mono font-medium text-slate-600 text-[11px]">${row.time}</td>
+                    <td class="p-1.5 border font-bold bg-slate-100">${row.period}</td>
+                `;
+
+                CLASSES.forEach(cls => {
+                    const code = row.map[cls] || '-';
+                    let badgeClass = "bg-slate-100 text-slate-600";
+                    if (code !== '-' && !code.includes('ISTIRAHAT') && !code.includes('Pembiasaan')) {
+                        badgeClass = "bg-indigo-100 text-indigo-900 font-bold border border-indigo-200";
+                    }
+
+                    cellsHTML += `
+                        <td class="p-1 border">
+                            <span title="${TEACHERS[code] ? TEACHERS[code].name + ' - ' + TEACHERS[code].subject : code}" class="inline-block w-full py-1 rounded text-[11px] ${badgeClass}">
+                                ${code}
+                            </span>
+                        </td>
+                    `;
+                });
+
+                tr.innerHTML = cellsHTML;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderTeacherSchedule() {
+            const guruCode = document.getElementById('select-guru-filter').value;
+            const teacher = TEACHERS[guruCode] || { name: '-', subject: '-' };
+            const tbody = document.getElementById('tbody-guru-schedule');
+            tbody.innerHTML = '';
+
+            let totalJP = 0;
+            const scheduleList = [];
+
+            RAW_SCHEDULE.forEach(row => {
+                CLASSES.forEach(cls => {
+                    if (row.map[cls] === guruCode) {
+                        totalJP++;
+                        scheduleList.push({
+                            day: row.day,
+                            time: row.time,
+                            period: row.period,
+                            kelas: cls,
+                            subject: teacher.subject
+                        });
+                    }
+                });
+            });
+
+            const isWali = Object.keys(HOMEROOMS).find(k => HOMEROOMS[k] === guruCode);
+            document.getElementById('teacher-info-card').innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-yellow-400 text-indigo-950 font-black text-lg flex items-center justify-center shrink-0">
+                        ${guruCode}
+                    </div>
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold">${teacher.name}</h3>
+                        <p class="text-[11px] text-indigo-200">Mapel: <span class="font-semibold text-white">${teacher.subject}</span> ${isWali ? `| Wali Kelas ${isWali}` : ''}</p>
+                    </div>
+                </div>
+                <div class="bg-indigo-800 px-3 py-1.5 rounded-xl text-center border border-indigo-700 shrink-0 self-end sm:self-auto">
+                    <span class="text-xl font-black text-yellow-300">${totalJP}</span>
+                    <span class="text-[10px] block text-indigo-200 font-medium">Jam / Minggu</span>
+                </div>
+            `;
+
+            if (scheduleList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Tidak ada jadwal mengajar.</td></tr>`;
+                return;
+            }
+
+            scheduleList.forEach(item => {
+                const dayColorClass = DAY_COLOR_CLASSES[item.day] || 'bg-slate-100 text-slate-800';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b";
+                tr.innerHTML = `
+                    <td class="p-2.5">
+                        <span class="inline-block px-2.5 py-0.5 rounded-lg border text-[11px] ${dayColorClass}">${item.day}</span>
+                    </td>
+                    <td class="p-2.5 font-mono text-[11px] text-slate-600">${item.time}</td>
+                    <td class="p-2.5 font-bold text-slate-700">Jam ke-${item.period}</td>
+                    <td class="p-2.5"><span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-lg text-[11px]">Kelas ${item.kelas}</span></td>
+                    <td class="p-2.5 font-medium text-slate-800">${item.subject}</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="prepareJournalFromSchedule('${guruCode}', '${item.kelas}', 'Jam ke-${item.period} (${item.time})')" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 mx-auto transition active:scale-95">
+                            <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Jurnal
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function renderClassSchedule() {
+            const selectedClass = document.getElementById('select-kelas-filter').value;
+            const selectedDay = document.getElementById('select-hari-kelas').value;
+            const tbody = document.getElementById('tbody-kelas-schedule');
+            tbody.innerHTML = '';
+
+            const waliCode = HOMEROOMS[selectedClass];
+            const waliTeacher = TEACHERS[waliCode];
+
+            document.getElementById('class-info-card').innerHTML = `
+                <div>
+                    <h3 class="text-sm sm:text-base font-bold">KELAS ${selectedClass} ${selectedDay !== 'SEMUA' ? `(${selectedDay})` : ''}</h3>
+                    <p class="text-[11px] text-emerald-100">Wali Kelas: <span class="font-semibold text-white">${waliTeacher ? waliTeacher.name : '-'}</span></p>
+                </div>
+                <div class="text-[10px] bg-emerald-900 px-2.5 py-1 rounded-lg border border-emerald-700">
+                    SMPN 3 Besuki
+                </div>
+            `;
+
+            let filteredSchedule = RAW_SCHEDULE;
+            if (selectedDay !== 'SEMUA') {
+                filteredSchedule = RAW_SCHEDULE.filter(r => r.day === selectedDay);
+            }
+
+            filteredSchedule.forEach(row => {
+                const code = row.map[selectedClass] || '-';
+                const teacher = TEACHERS[code];
+                const dayColorClass = DAY_COLOR_CLASSES[row.day] || 'bg-slate-100 text-slate-800';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b text-center";
+                tr.innerHTML = `
+                    <td class="p-2 border">
+                        <span class="inline-block px-2 py-0.5 rounded text-[10px] border ${dayColorClass}">${row.day}</span>
+                    </td>
+                    <td class="p-2 border font-mono text-slate-600 text-[11px]">${row.time}</td>
+                    <td class="p-2 border font-semibold">${row.period}</td>
+                    <td class="p-2 border font-bold text-indigo-900">${teacher ? teacher.subject : code}</td>
+                    <td class="p-2 border text-slate-700 text-[11px]">${teacher ? `${teacher.name} (${code})` : '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function downloadClassScheduleExcel() {
+            const selectedClass = document.getElementById('select-kelas-filter').value;
+            const selectedDay = document.getElementById('select-hari-kelas').value;
+
+            const exportData = [];
+            let filteredSchedule = RAW_SCHEDULE;
+            if (selectedDay !== 'SEMUA') {
+                filteredSchedule = RAW_SCHEDULE.filter(r => r.day === selectedDay);
+            }
+
+            filteredSchedule.forEach(row => {
+                const code = row.map[selectedClass] || '-';
+                const teacher = TEACHERS[code];
+                exportData.push({
+                    'Hari': row.day,
+                    'Waktu': row.time,
+                    'Jam Ke': row.period,
+                    'Mata Pelajaran': teacher ? teacher.subject : code,
+                    'Guru Pengajar': teacher ? teacher.name : '-',
+                    'Kode Guru': code
+                });
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `Jadwal ${selectedClass}`);
+            XLSX.writeFile(wb, `Jadwal_Kelas_${selectedClass.replace(' ', '_')}.xlsx`);
+        }
+
+        function downloadAllClassesScheduleExcel() {
+            const wb = XLSX.utils.book_new();
+
+            CLASSES.forEach(cls => {
+                const exportData = [];
+                RAW_SCHEDULE.forEach(row => {
+                    const code = row.map[cls] || '-';
+                    const teacher = TEACHERS[code];
+                    exportData.push({
+                        'Hari': row.day,
+                        'Waktu': row.time,
+                        'Jam Ke': row.period,
+                        'Mata Pelajaran': teacher ? teacher.subject : code,
+                        'Guru Pengajar': teacher ? teacher.name : '-',
+                        'Kode Guru': code
+                    });
+                });
+
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                XLSX.utils.book_append_sheet(wb, ws, `Kelas ${cls}`);
+            });
+
+            XLSX.writeFile(wb, `Jadwal_Lengkap_Seluruh_Kelas_SMPN3Besuki.xlsx`);
+        }
+
+        function prepareJournalFromSchedule(guruCode, kelas, jamStr) {
+            switchTab('jurnal-input');
+            document.getElementById('jurnal-guru').value = guruCode;
+            autoFillSubject();
+            document.getElementById('jurnal-kelas').value = kelas;
+            document.getElementById('jurnal-jam').value = jamStr;
+        }
+
+        function saveJournalEntry(e) {
+            e.preventDefault();
+            const guruCode = document.getElementById('jurnal-guru').value;
+            const teacher = TEACHERS[guruCode] || { name: '-', subject: '-' };
+
+            const newEntry = {
+                id: Date.now(),
+                tanggal: document.getElementById('jurnal-tanggal').value,
+                guruCode: guruCode,
+                guruName: teacher.name,
+                mapel: document.getElementById('jurnal-mapel').value,
+                kelas: document.getElementById('jurnal-kelas').value,
+                jam: document.getElementById('jurnal-jam').value,
+                status: document.getElementById('jurnal-status').value,
+                metode: document.getElementById('jurnal-metode').value || '-',
+                hadir: document.getElementById('jurnal-hadir').value,
+                sakit: document.getElementById('jurnal-sakit').value,
+                izin: document.getElementById('jurnal-izin').value,
+                alpha: document.getElementById('jurnal-alpha').value,
+                detailAbsen: document.getElementById('jurnal-absen-detail').value || 'Nihil',
+                materi: document.getElementById('jurnal-materi').value,
+                catatan: document.getElementById('jurnal-catatan').value || '-'
+            };
+
+            journalEntries.unshift(newEntry);
+            localStorage.setItem('smpn3_jurnal_db', JSON.stringify(journalEntries));
+
+            alert('✅ Jurnal mengajar berhasil disimpan!');
+            renderRekapJurnal();
+            switchTab('jurnal-rekap');
+        }
+
+        function renderRekapJurnal() {
+            const tbody = document.getElementById('tbody-rekap-jurnal');
+            tbody.innerHTML = '';
+
+            if (journalEntries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Belum ada catatan jurnal mengajar tersimpan.</td></tr>`;
+                return;
+            }
+
+            journalEntries.forEach((entry, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b align-top text-xs";
+                tr.innerHTML = `
+                    <td class="p-1.5 border text-center font-bold">${idx + 1}</td>
+                    <td class="p-1.5 border font-medium">${formatDateIndo(entry.tanggal)}</td>
+                    <td class="p-1.5 border">
+                        <div class="font-bold text-slate-800 text-[11px]">${entry.guruName}</div>
+                        <div class="text-[10px] text-indigo-700 font-semibold">${entry.mapel}</div>
+                    </td>
+                    <td class="p-1.5 border text-center font-bold text-emerald-800">${entry.kelas}</td>
+                    <td class="p-1.5 border text-center font-medium text-[11px]">${entry.jam}</td>
+                    <td class="p-1.5 border">
+                        <div class="font-semibold text-slate-800 mb-0.5 text-[11px]">${entry.materi}</div>
+                        <div class="text-[10px] text-slate-500">Metode: ${entry.metode}</div>
+                    </td>
+                    <td class="p-1.5 border">
+                        <div class="text-[10px] space-y-0.5">
+                            <div>Hadir: <b class="text-emerald-700">${entry.hadir}</b></div>
+                            <div>S: ${entry.sakit} | I: ${entry.izin} | A: ${entry.alpha}</div>
+                            <div class="text-slate-400 italic">Ket: ${entry.detailAbsen}</div>
+                        </div>
+                    </td>
+                    <td class="p-1.5 border text-slate-600 text-[11px]">${entry.catatan}</td>
+                    <td class="p-1.5 border text-center no-print">
+                        <button onclick="deleteJournalEntry(${entry.id})" class="p-1 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded transition" title="Hapus">
+                            <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function deleteJournalEntry(id) {
+            if (confirm('Hapus catatan jurnal ini?')) {
+                journalEntries = journalEntries.filter(item => item.id !== id);
+                localStorage.setItem('smpn3_jurnal_db', JSON.stringify(journalEntries));
+                renderRekapJurnal();
+            }
+        }
+
+        function clearJournalData() {
+            if (confirm('Kosongkan seluruh riwayat jurnal?')) {
+                journalEntries = [];
+                localStorage.removeItem('smpn3_jurnal_db');
+                renderRekapJurnal();
+            }
+        }
+
+        function formatDateIndo(dateStr) {
+            if (!dateStr) return '-';
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateStr).toLocaleDateString('id-ID', options);
+        }
+    </script>
+</body>
+</html>
