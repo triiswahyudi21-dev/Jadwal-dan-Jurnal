@@ -12,19 +12,17 @@
     <!-- SheetJS (XLSX Parser & Exporter) CDN -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        /* CSS Khusus Sentuhan & Scrolling HP */
+        /* CSS Sentuhan & Zooming HP */
         html, body {
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
         
-        /* Smooth Horizontal Touch Scroll */
         .touch-scroll {
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
         }
 
-        /* Hide scrollbar for clean mobile tabs */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -43,44 +41,41 @@
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Header / Navbar HP Friendly -->
+    <!-- Header / Navbar Rapi HP -->
     <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-40 no-print">
-        <div class="max-w-7xl mx-auto px-3 py-3 flex flex-col gap-3">
+        <div class="max-w-7xl mx-auto px-3 py-2.5 flex flex-col gap-2.5">
             
-            <!-- Top Bar: Logo & Title -->
+            <!-- Top Bar: Logo & Info -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 bg-indigo-700 rounded-xl shadow-inner shrink-0">
-                        <i data-lucide="book-open-check" class="w-6 h-6 text-yellow-400"></i>
+                        <i data-lucide="book-open-check" class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400"></i>
                     </div>
                     <div>
-                        <h1 class="text-base sm:text-lg font-bold tracking-wide leading-tight">SMPN 3 BESUKI</h1>
-                        <p class="text-[11px] text-indigo-200 flex items-center gap-1.5">
-                            <span class="truncate">Jadwal & Jurnal</span>
+                        <h1 class="text-sm sm:text-lg font-bold tracking-wide leading-tight">SMPN 3 BESUKI</h1>
+                        <p class="text-[10px] sm:text-xs text-indigo-200 flex items-center gap-1">
+                            <span>Aplikasi Jadwal & Jurnal</span> | 
                             <span id="label-tahun-pelajaran" class="bg-indigo-800 px-1.5 py-0.5 rounded text-yellow-300 font-semibold text-[10px]">TP 2026/2027</span>
                         </p>
                     </div>
                 </div>
 
-                <button onclick="openUploadModal()" class="px-2.5 py-2 bg-amber-500 hover:bg-amber-600 text-indigo-950 font-bold rounded-xl text-xs flex items-center gap-1 shadow transition shrink-0 active:scale-95">
+                <button onclick="openUploadModal()" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-indigo-950 font-bold rounded-xl text-xs flex items-center gap-1 shadow transition active:scale-95 shrink-0">
                     <i data-lucide="file-up" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">Upload Excel</span>
                 </button>
             </div>
 
-            <!-- Scrollable Nav Tabs for Mobile -->
-            <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 text-xs">
+            <!-- Scrollable Nav Tabs -->
+            <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs">
                 <button onclick="switchTab('jadwal-master')" id="btn-jadwal-master" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-600 text-white font-semibold shrink-0 transition active:scale-95">
-                    <i data-lucide="calendar" class="w-4 h-4"></i> Master
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Master Jadwal
                 </button>
                 <button onclick="switchTab('jadwal-guru')" id="btn-jadwal-guru" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
                     <i data-lucide="user-check" class="w-4 h-4"></i> Jadwal Guru
                 </button>
                 <button onclick="switchTab('jadwal-kelas')" id="btn-jadwal-kelas" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
                     <i data-lucide="layout-grid" class="w-4 h-4"></i> Jadwal Kelas
-                </button>
-                <button onclick="switchTab('jurnal-input')" id="btn-jurnal-input" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
-                    <i data-lucide="pen-tool" class="w-4 h-4"></i> Isi Jurnal
                 </button>
                 <button onclick="switchTab('jurnal-rekap')" id="btn-jurnal-rekap" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Rekap Jurnal
@@ -101,7 +96,7 @@
             </div>
 
             <p class="text-xs text-slate-600 leading-relaxed">
-                Pilih file Excel jadwal mengajar baru (`.xlsx` atau `.xls`). Sistem akan otomatis mendeteksi <b>Tahun Pelajaran</b>, <b>Guru</b>, <b>Wali Kelas</b>, dan <b>Jadwal</b>.
+                Pilih file Excel jadwal mengajar baru (`.xlsx` / `.xls`). Sistem akan membaca otomatis <b>Tahun Pelajaran</b>, <b>Guru</b>, <b>Wali Kelas</b>, dan <b>Jadwal</b>.
             </p>
 
             <div class="border-2 border-dashed border-indigo-200 bg-indigo-50/50 rounded-xl p-5 text-center space-y-2">
@@ -131,12 +126,12 @@
 
         <!-- TAB 1: JADWAL MASTER -->
         <section id="tab-jadwal-master" class="tab-content space-y-3">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                        <i data-lucide="grid" class="w-5 h-5 text-indigo-600"></i> Master Jadwal Mingguan
+                    <h2 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="grid" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Master Jadwal Pelajaran Mingguan
                     </h2>
-                    <p class="text-[11px] text-slate-500">Cubit layar HP untuk Zoom In / Out jika tampilan terasa kecil</p>
+                    <p class="text-[11px] text-slate-500">Gunakan pinch-zoom untuk memperbesar/memperkecil tampilan di HP</p>
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <label class="text-xs font-semibold text-slate-600 shrink-0">Hari:</label>
@@ -150,19 +145,13 @@
                 </div>
             </div>
 
-            <!-- Petunjuk Geser Layar Mobile -->
-            <div class="sm:hidden flex items-center gap-1.5 text-[11px] text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
-                <i data-lucide="move-horizontal" class="w-4 h-4 shrink-0"></i>
-                <span>Geser tabel ke kanan/kiri untuk melihat kelas lain.</span>
-            </div>
-
             <!-- Schedule Table Container -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="overflow-x-auto touch-scroll">
                     <table class="w-full text-xs text-left border-collapse min-w-[700px]">
                         <thead>
                             <tr class="bg-indigo-900 text-white text-center">
-                                <th class="p-2 border border-indigo-800 w-20">WAKTU</th>
+                                <th class="p-2 border border-indigo-800 w-28 whitespace-nowrap">WAKTU</th>
                                 <th class="p-2 border border-indigo-800 w-12">JAM</th>
                                 <th class="p-2 border border-indigo-800" colspan="4">KELAS VII</th>
                                 <th class="p-2 border border-indigo-800" colspan="4">KELAS VIII</th>
@@ -205,12 +194,12 @@
 
         <!-- TAB 2: JADWAL PER GURU -->
         <section id="tab-jadwal-guru" class="tab-content hidden space-y-3">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+            <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                 <div>
-                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                        <i data-lucide="user" class="w-5 h-5 text-indigo-600"></i> Jadwal Mengajar Guru
+                    <h2 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Jadwal Mengajar Guru
                     </h2>
-                    <p class="text-[11px] text-slate-500">Warna blok berbeda di setiap hari mengajar</p>
+                    <p class="text-[11px] text-slate-500">Jam berurutan di kelas yang sama otomatis digabung rapi</p>
                 </div>
                 <div class="w-full md:w-auto">
                     <select id="select-guru-filter" onchange="renderTeacherSchedule()" class="w-full md:w-64 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
@@ -220,7 +209,7 @@
             </div>
 
             <!-- Teacher Detail Card -->
-            <div id="teacher-info-card" class="bg-indigo-900 text-white p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div id="teacher-info-card" class="bg-indigo-900 text-white p-3.5 sm:p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <!-- Dynamic Teacher Info -->
             </div>
 
@@ -229,13 +218,13 @@
                 <div class="overflow-x-auto touch-scroll">
                     <table class="w-full text-xs text-left min-w-[500px]">
                         <thead>
-                            <tr class="bg-slate-100 text-slate-700 uppercase text-[11px] font-bold border-b">
-                                <th class="p-2.5">Hari</th>
-                                <th class="p-2.5">Waktu</th>
-                                <th class="p-2.5">Jam Ke</th>
-                                <th class="p-2.5">Kelas</th>
-                                <th class="p-2.5">Mata Pelajaran</th>
-                                <th class="p-2.5 text-center">Aksi</th>
+                            <tr class="bg-slate-100 text-slate-700 uppercase text-[11px] font-bold border-b text-center">
+                                <th class="p-2.5 w-20">Hari</th>
+                                <th class="p-2.5 w-28">Waktu</th>
+                                <th class="p-2.5 w-24">Jam Ke</th>
+                                <th class="p-2.5 w-20">Kelas</th>
+                                <th class="p-2.5 text-left">Mata Pelajaran</th>
+                                <th class="p-2.5 w-24">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-guru-schedule" class="divide-y divide-slate-100">
@@ -248,12 +237,12 @@
 
         <!-- TAB 3: JADWAL PER KELAS -->
         <section id="tab-jadwal-kelas" class="tab-content hidden space-y-3">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
                 <div>
-                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                        <i data-lucide="school" class="w-5 h-5 text-indigo-600"></i> Jadwal Pelajaran Per Kelas
+                    <h2 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="school" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Jadwal Pelajaran Per Kelas
                     </h2>
-                    <p class="text-[11px] text-slate-500">Pilih hari & kelas, serta unduh file Excel langsung dari HP</p>
+                    <p class="text-[11px] text-slate-500">Format waktu & angka rapi, siap unduh ke file Excel</p>
                 </div>
                 
                 <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
@@ -302,10 +291,10 @@
                         <thead>
                             <tr class="bg-slate-800 text-white font-bold text-center">
                                 <th class="p-2 border border-slate-700 w-20">HARI</th>
-                                <th class="p-2 border border-slate-700 w-24">WAKTU</th>
-                                <th class="p-2 border border-slate-700 w-14">JAM KE</th>
-                                <th class="p-2 border border-slate-700">MATA PELAJARAN</th>
-                                <th class="p-2 border border-slate-700">GURU PENGAJAR</th>
+                                <th class="p-2 border border-slate-700 w-28 whitespace-nowrap">WAKTU</th>
+                                <th class="p-2 border border-slate-700 w-16">JAM KE</th>
+                                <th class="p-2 border border-slate-700 text-left">MATA PELAJARAN</th>
+                                <th class="p-2 border border-slate-700 text-left">GURU PENGAJAR</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-kelas-schedule" class="divide-y divide-slate-200">
@@ -324,9 +313,11 @@
                         <h2 class="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
                             <i data-lucide="edit-3" class="w-5 h-5 text-indigo-600"></i> Form Jurnal Mengajar Harian
                         </h2>
-                        <p class="text-[11px] text-slate-500">Input ringkas & responsif di HP</p>
+                        <p class="text-[11px] text-slate-500">Isi materi & presensi siswa untuk jam mengajar terpilih</p>
                     </div>
-                    <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full">SMPN 3</span>
+                    <button onclick="switchTab('jadwal-guru')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1 transition">
+                        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Kembali
+                    </button>
                 </div>
 
                 <form id="form-jurnal" onsubmit="saveJournalEntry(event)" class="space-y-4">
@@ -350,7 +341,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1">Jam Ke & Waktu</label>
-                            <input type="text" id="jurnal-jam" placeholder="Jam 1-2 (07.05 - 08.15)" required class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
+                            <input type="text" id="jurnal-jam" placeholder="Jam 1 - 2 (07.05 - 08.15)" required class="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-mono focus:ring-2 focus:ring-indigo-500">
                         </div>
                     </div>
 
@@ -408,11 +399,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1">Materi / Sub-Materi</label>
-                            <textarea id="jurnal-materi" rows="3" required placeholder="Tuliskan pokok bahasan..." class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500"></textarea>
+                            <textarea id="jurnal-materi" rows="3" required placeholder="Tuliskan pokok bahasan hari ini..." class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500"></textarea>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Refleksi</label>
-                            <textarea id="jurnal-catatan" rows="3" placeholder="Catatan kelas, kendala, atau tindak lanjut..." class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500"></textarea>
+                            <textarea id="jurnal-catatan" rows="3" placeholder="Catatan keaktifan, kendala, atau tindak lanjut..." class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500"></textarea>
                         </div>
                     </div>
 
@@ -436,13 +427,22 @@
                     <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
                         <i data-lucide="folder-check" class="w-5 h-5 text-indigo-600"></i> Rekap Jurnal Mengajar
                     </h2>
-                    <p class="text-[11px] text-slate-500">Riwayat pembelajaran tersimpan di HP/Browser</p>
+                    <p class="text-[11px] text-slate-500">Atur semester & cetak dokumen agenda jurnal resmi</p>
                 </div>
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <button onclick="window.print()" class="flex-1 sm:flex-none px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition active:scale-95">
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <!-- Filter Semester -->
+                    <div class="flex items-center gap-1">
+                        <label class="text-xs font-semibold text-slate-600">Semester:</label>
+                        <select id="select-rekap-semester" onchange="updateSemesterDisplay()" class="border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                            <option value="1 (Ganjil)">1 (Ganjil)</option>
+                            <option value="2 (Genap)">2 (Genap)</option>
+                        </select>
+                    </div>
+
+                    <button onclick="window.print()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition active:scale-95">
                         <i data-lucide="printer" class="w-4 h-4"></i> Cetak PDF
                     </button>
-                    <button onclick="clearJournalData()" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1 transition">
+                    <button onclick="clearJournalData()" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1 transition" title="Hapus seluruh riwayat jurnal">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -455,8 +455,24 @@
                     <h3 class="text-xs sm:text-sm font-bold uppercase text-slate-900">PEMERINTAH KABUPATEN SITUBONDO</h3>
                     <h2 class="text-sm sm:text-lg font-extrabold uppercase text-slate-900">DINAS PENDIDIKAN DAN KEBUDAYAAN</h2>
                     <h1 class="text-base sm:text-2xl font-black uppercase text-indigo-900">SMP NEGERI 3 BESUKI</h1>
-                    <p class="text-[10px] sm:text-xs text-slate-600">Jl. Demang Setro Besuki, Kab. Situbondo | <span id="print-tahun-label">TP 2026/2027</span></p>
+                    <p class="text-[10px] sm:text-xs text-slate-600">Jl. Gunung Ringgit No. 10 Besuki</p>
                     <div class="mt-2 text-xs sm:text-sm font-bold underline uppercase text-slate-800">AGENDA & JURNAL MENGAJAR GURU</div>
+                </div>
+
+                <!-- Teks Semester dan Tahun Pelajaran Sejajar Rapi di Sebelah Kiri -->
+                <div class="mb-4 text-xs font-medium text-slate-800">
+                    <table class="border-none text-xs">
+                        <tr>
+                            <td class="pr-3 py-0.5 font-semibold w-28">Semester</td>
+                            <td class="px-1 py-0.5 font-bold">:</td>
+                            <td class="py-0.5 font-bold text-slate-900" id="print-semester-val">1 (Ganjil)</td>
+                        </tr>
+                        <tr>
+                            <td class="pr-3 py-0.5 font-semibold w-28">Tahun Pelajaran</td>
+                            <td class="px-1 py-0.5 font-bold">:</td>
+                            <td class="py-0.5 font-bold text-slate-900" id="print-tahun-pelajaran-val">2026/2027</td>
+                        </tr>
+                    </table>
                 </div>
 
                 <!-- Table Rekap -->
@@ -468,7 +484,7 @@
                                 <th class="p-1.5 border border-slate-300 w-20">TANGGAL</th>
                                 <th class="p-1.5 border border-slate-300 w-32">GURU & MAPEL</th>
                                 <th class="p-1.5 border border-slate-300 w-14">KELAS</th>
-                                <th class="p-1.5 border border-slate-300 w-16">JAM KE</th>
+                                <th class="p-1.5 border border-slate-300 w-20">JAM KE</th>
                                 <th class="p-1.5 border border-slate-300">MATERI</th>
                                 <th class="p-1.5 border border-slate-300 w-20">PRESENSI</th>
                                 <th class="p-1.5 border border-slate-300">CATATAN</th>
@@ -600,6 +616,15 @@
             { day: 'JUMAT', time: '10.10 - 10.45', period: '5', map: {'VII A':'G','VII B':'A','VII C':'C','VII D':'S','VIII A':'J','VIII B':'P','VIII C':'F','VIII D':'B','IX A':'N','IX B':'D','IX C':'I','IX D':'O'} }
         ];
 
+        function formatTimeStr(timeStr) {
+            if (!timeStr) return '-';
+            const parts = timeStr.split(/[-–]/);
+            if (parts.length === 2) {
+                return `${parts[0].trim()} - ${parts[1].trim()}`;
+            }
+            return timeStr.trim();
+        }
+
         // Active State
         let activeTahunPelajaran = localStorage.getItem('smpn3_tahun_pelajaran') || '2026/2027';
         let TEACHERS = JSON.parse(localStorage.getItem('smpn3_teachers_db')) || DEFAULT_TEACHERS;
@@ -615,7 +640,7 @@
                 guruName: 'Dra. Suprihatin',
                 mapel: 'IPS',
                 kelas: 'VII A',
-                jam: 'Jam 4-5 (09.15 - 10.25)',
+                jam: 'Jam 4 - 5 (09.15 - 10.25)',
                 status: 'Hadir (Tatap Muka)',
                 materi: 'Keberagaman Lingkungan Sekitar dan Interaksi Sosial',
                 metode: 'Diskusi Kelompok & Peta Konsep',
@@ -637,7 +662,12 @@
 
         function updateHeaderYearDisplay() {
             document.getElementById('label-tahun-pelajaran').innerText = `TP ${activeTahunPelajaran}`;
-            document.getElementById('print-tahun-label').innerText = `TP ${activeTahunPelajaran}`;
+            document.getElementById('print-tahun-pelajaran-val').innerText = activeTahunPelajaran;
+        }
+
+        function updateSemesterDisplay() {
+            const semVal = document.getElementById('select-rekap-semester').value;
+            document.getElementById('print-semester-val').innerText = semVal;
         }
 
         function refreshAllViews() {
@@ -648,6 +678,7 @@
             renderTeacherSchedule();
             renderClassSchedule();
             renderRekapJurnal();
+            updateSemesterDisplay();
         }
 
         function openUploadModal() {
@@ -828,8 +859,10 @@
 
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
             const activeBtn = document.getElementById(`btn-${tabId}`);
-            activeBtn.classList.add('bg-indigo-600', 'text-white');
-            activeBtn.classList.remove('bg-indigo-950', 'hover:bg-indigo-800', 'text-indigo-200');
+            if (activeBtn) {
+                activeBtn.classList.add('bg-indigo-600', 'text-white');
+                activeBtn.classList.remove('bg-indigo-950', 'hover:bg-indigo-800', 'text-indigo-200');
+            }
         }
 
         function populateTeacherSelects() {
@@ -905,7 +938,7 @@
                 tr.className = "hover:bg-slate-50 transition text-center";
 
                 let cellsHTML = `
-                    <td class="p-1.5 border font-mono font-medium text-slate-600 text-[11px]">${row.time}</td>
+                    <td class="p-1.5 border font-mono font-medium text-slate-600 text-[11px] whitespace-nowrap">${formatTimeStr(row.time)}</td>
                     <td class="p-1.5 border font-bold bg-slate-100">${row.period}</td>
                 `;
 
@@ -936,20 +969,72 @@
             const tbody = document.getElementById('tbody-guru-schedule');
             tbody.innerHTML = '';
 
+            const days = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT'];
             let totalJP = 0;
             const scheduleList = [];
 
-            RAW_SCHEDULE.forEach(row => {
+            days.forEach(day => {
+                const dayRows = RAW_SCHEDULE.filter(r => r.day === day);
+                
+                const classEntries = {};
+                dayRows.forEach(row => {
+                    CLASSES.forEach(cls => {
+                        if (row.map[cls] === guruCode) {
+                            if (!classEntries[cls]) classEntries[cls] = [];
+                            classEntries[cls].push({
+                                day: day,
+                                time: row.time,
+                                period: row.period,
+                                kelas: cls
+                            });
+                        }
+                    });
+                });
+
                 CLASSES.forEach(cls => {
-                    if (row.map[cls] === guruCode) {
-                        totalJP++;
-                        scheduleList.push({
-                            day: row.day,
-                            time: row.time,
-                            period: row.period,
-                            kelas: cls,
-                            subject: teacher.subject
-                        });
+                    if (classEntries[cls]) {
+                        const entries = classEntries[cls];
+                        let i = 0;
+                        while (i < entries.length) {
+                            const curr = entries[i];
+                            totalJP++;
+                            
+                            const parts = curr.time.split(/[-–]/);
+                            let startT = parts[0] ? parts[0].trim() : curr.time;
+                            let endT = parts[1] ? parts[1].trim() : curr.time;
+                            
+                            const periods = [curr.period];
+                            let j = i + 1;
+                            
+                            while (j < entries.length) {
+                                const pPrev = parseInt(entries[j-1].period, 10) || -1;
+                                const pCurr = parseInt(entries[j].period, 10) || -2;
+                                
+                                if (pCurr === pPrev + 1) {
+                                    totalJP++;
+                                    const tjParts = entries[j].time.split(/[-–]/);
+                                    if (tjParts.length > 1) endT = tjParts[1].trim();
+                                    periods.push(entries[j].period);
+                                    j++;
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            const periodStr = periods.length > 1 ? `Jam ${periods[0]} - ${periods[periods.length - 1]}` : (periods[0] ? `Jam ${periods[0]}` : '-');
+                            const timeStr = `${startT} - ${endT}`;
+
+                            scheduleList.push({
+                                day: day,
+                                time: timeStr,
+                                period: periodStr,
+                                kelas: cls,
+                                subject: teacher.subject,
+                                jpCount: periods.length
+                            });
+
+                            i = j;
+                        }
                     }
                 });
             });
@@ -972,7 +1057,7 @@
             `;
 
             if (scheduleList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Tidak ada jadwal mengajar.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Tidak ada jadwal mengajar untuk guru ini.</td></tr>`;
                 return;
             }
 
@@ -982,16 +1067,16 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 border-b";
                 tr.innerHTML = `
-                    <td class="p-2.5">
+                    <td class="p-2.5 text-center">
                         <span class="inline-block px-2.5 py-0.5 rounded-lg border text-[11px] ${dayColorClass}">${item.day}</span>
                     </td>
-                    <td class="p-2.5 font-mono text-[11px] text-slate-600">${item.time}</td>
-                    <td class="p-2.5 font-bold text-slate-700">Jam ke-${item.period}</td>
-                    <td class="p-2.5"><span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-lg text-[11px]">Kelas ${item.kelas}</span></td>
-                    <td class="p-2.5 font-medium text-slate-800">${item.subject}</td>
+                    <td class="p-2.5 font-mono text-[11px] text-slate-600 text-center whitespace-nowrap">${formatTimeStr(item.time)}</td>
+                    <td class="p-2.5 font-bold text-slate-700 text-center whitespace-nowrap">${item.period}</td>
+                    <td class="p-2.5 text-center"><span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-lg text-[11px] whitespace-nowrap">Kelas ${item.kelas}</span></td>
+                    <td class="p-2.5 font-semibold text-slate-800 text-left">${item.subject}</td>
                     <td class="p-2.5 text-center">
-                        <button onclick="prepareJournalFromSchedule('${guruCode}', '${item.kelas}', 'Jam ke-${item.period} (${item.time})')" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 mx-auto transition active:scale-95">
-                            <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Jurnal
+                        <button onclick="prepareJournalFromSchedule('${guruCode}', '${item.kelas}', '${item.period} (${formatTimeStr(item.time)})')" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1 mx-auto transition active:scale-95 shadow-sm">
+                            <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Isi Jurnal
                         </button>
                     </td>
                 `;
@@ -1035,10 +1120,10 @@
                     <td class="p-2 border">
                         <span class="inline-block px-2 py-0.5 rounded text-[10px] border ${dayColorClass}">${row.day}</span>
                     </td>
-                    <td class="p-2 border font-mono text-slate-600 text-[11px]">${row.time}</td>
+                    <td class="p-2 border font-mono text-slate-600 text-[11px] whitespace-nowrap">${formatTimeStr(row.time)}</td>
                     <td class="p-2 border font-semibold">${row.period}</td>
-                    <td class="p-2 border font-bold text-indigo-900">${teacher ? teacher.subject : code}</td>
-                    <td class="p-2 border text-slate-700 text-[11px]">${teacher ? `${teacher.name} (${code})` : '-'}</td>
+                    <td class="p-2 border font-bold text-indigo-900 text-left">${teacher ? teacher.subject : code}</td>
+                    <td class="p-2 border text-slate-700 text-[11px] text-left">${teacher ? `${teacher.name} (${code})` : '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1059,7 +1144,7 @@
                 const teacher = TEACHERS[code];
                 exportData.push({
                     'Hari': row.day,
-                    'Waktu': row.time,
+                    'Waktu': formatTimeStr(row.time),
                     'Jam Ke': row.period,
                     'Mata Pelajaran': teacher ? teacher.subject : code,
                     'Guru Pengajar': teacher ? teacher.name : '-',
@@ -1083,7 +1168,7 @@
                     const teacher = TEACHERS[code];
                     exportData.push({
                         'Hari': row.day,
-                        'Waktu': row.time,
+                        'Waktu': formatTimeStr(row.time),
                         'Jam Ke': row.period,
                         'Mata Pelajaran': teacher ? teacher.subject : code,
                         'Guru Pengajar': teacher ? teacher.name : '-',
@@ -1152,13 +1237,13 @@
                 tr.className = "hover:bg-slate-50 border-b align-top text-xs";
                 tr.innerHTML = `
                     <td class="p-1.5 border text-center font-bold">${idx + 1}</td>
-                    <td class="p-1.5 border font-medium">${formatDateIndo(entry.tanggal)}</td>
+                    <td class="p-1.5 border font-medium whitespace-nowrap">${formatDateIndo(entry.tanggal)}</td>
                     <td class="p-1.5 border">
                         <div class="font-bold text-slate-800 text-[11px]">${entry.guruName}</div>
                         <div class="text-[10px] text-indigo-700 font-semibold">${entry.mapel}</div>
                     </td>
                     <td class="p-1.5 border text-center font-bold text-emerald-800">${entry.kelas}</td>
-                    <td class="p-1.5 border text-center font-medium text-[11px]">${entry.jam}</td>
+                    <td class="p-1.5 border text-center font-medium text-[11px] whitespace-nowrap">${entry.jam}</td>
                     <td class="p-1.5 border">
                         <div class="font-semibold text-slate-800 mb-0.5 text-[11px]">${entry.materi}</div>
                         <div class="text-[10px] text-slate-500">Metode: ${entry.metode}</div>
