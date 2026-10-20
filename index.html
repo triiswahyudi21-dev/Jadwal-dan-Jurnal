@@ -199,7 +199,7 @@
                     <h2 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
                         <i data-lucide="user" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Jadwal Mengajar Guru
                     </h2>
-                    <p class="text-[11px] text-slate-500">Filter berdasarkan hari atau tampilkan semua jadwal minggu ini</p>
+                    <p class="text-[11px] text-slate-500">Filter berdasarkan hari atau tampilkan semua jadwal (Jam ke tersusun urut kronologis ke bawah)</p>
                 </div>
                 
                 <div class="grid grid-cols-2 sm:flex items-center gap-2 w-full md:w-auto">
@@ -239,7 +239,7 @@
                             <tr class="bg-slate-800 text-white uppercase text-[11px] font-bold border-b text-center">
                                 <th class="p-2.5 w-24">Hari</th>
                                 <th class="p-2.5 w-28">Waktu</th>
-                                <th class="p-2.5 w-28">Jam Ke</th>
+                                <th class="p-2.5 w-20">Jam Ke</th>
                                 <th class="p-2.5 w-20">Kelas</th>
                                 <th class="p-2.5 text-left">Mata Pelajaran</th>
                                 <th class="p-2.5 w-24">Aksi</th>
@@ -310,7 +310,7 @@
                             <tr class="bg-slate-800 text-white font-bold text-center">
                                 <th class="p-2 border border-slate-700 w-24">HARI</th>
                                 <th class="p-2 border border-slate-700 w-28 whitespace-nowrap">WAKTU</th>
-                                <th class="p-2 border border-slate-700 w-24">JAM KE</th>
+                                <th class="p-2 border border-slate-700 w-20">JAM KE</th>
                                 <th class="p-2 border border-slate-700 text-left">MATA PELAJARAN</th>
                                 <th class="p-2 border border-slate-700 text-left">GURU PENGAJAR</th>
                             </tr>
@@ -359,7 +359,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1">Jam Ke & Waktu</label>
-                            <input type="text" id="jurnal-jam" placeholder="Jam 1 - 2 (07.05 - 08.15)" required class="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-mono focus:ring-2 focus:ring-indigo-500">
+                            <input type="text" id="jurnal-jam" placeholder="1 (07.05 - 07.40)" required class="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-mono focus:ring-2 focus:ring-indigo-500">
                         </div>
                     </div>
 
@@ -651,6 +651,15 @@
             return timeStr.trim();
         }
 
+        function parseMinutesFromTimeStr(tStr) {
+            if (!tStr) return 0;
+            const match = String(tStr).match(/(\d{1,2})[:.](\d{2})/);
+            if (match) {
+                return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+            }
+            return 0;
+        }
+
         // Active State
         let activeTahunPelajaran = localStorage.getItem('smpn3_tahun_pelajaran') || '2026/2027';
         let TEACHERS = JSON.parse(localStorage.getItem('smpn3_teachers_db')) || DEFAULT_TEACHERS;
@@ -666,7 +675,7 @@
                 guruName: 'Dra. Suprihatin',
                 mapel: 'IPS',
                 kelas: 'VII A',
-                jam: 'Jam 4 - 5 (09.15 - 10.25)',
+                jam: 'Jam 4 (09.15 - 09.50)',
                 status: 'Hadir (Tatap Muka)',
                 materi: 'Keberagaman Lingkungan Sekitar dan Interaksi Sosial',
                 metode: 'Diskusi Kelompok & Peta Konsep',
@@ -989,7 +998,7 @@
             });
         }
 
-        // Render Tab 2: Teacher Schedule (Filter Hari & Blok Warna)
+        // Render Tab 2: Teacher Schedule (Urut Kronologis Jam ke Bawah, Tanpa Teks 'Jam')
         function renderTeacherSchedule() {
             const guruCode = document.getElementById('select-guru-filter').value;
             const selectedDay = document.getElementById('select-hari-guru') ? document.getElementById('select-hari-guru').value : 'SEMUA';
@@ -1004,6 +1013,7 @@
             days.forEach(day => {
                 const dayRows = RAW_SCHEDULE.filter(r => r.day === day);
                 
+                // Ambil seluruh slot mengajar guru pada hari ini
                 const teacherSlots = [];
                 dayRows.forEach(row => {
                     CLASSES.forEach(cls => {
@@ -1018,48 +1028,28 @@
                     });
                 });
 
-                let i = 0;
-                while (i < teacherSlots.length) {
-                    const curr = teacherSlots[i];
+                // Urutkan slot mengajar secara kronologis berdasarkan Jam Ke & Waktu
+                teacherSlots.sort((a, b) => {
+                    const pA = parseInt(a.period, 10) || 0;
+                    const pB = parseInt(b.period, 10) || 0;
+                    if (pA !== pB) return pA - pB;
+                    return parseMinutesFromTimeStr(a.time) - parseMinutesFromTimeStr(b.time);
+                });
+
+                // Tampilkan setiap jam ke secara berurutan baris demi baris ke bawah
+                teacherSlots.forEach(slot => {
                     totalJP++;
-                    
-                    const parts = curr.time.split(/[-–]/);
-                    let startT = parts[0] ? parts[0].trim() : curr.time;
-                    let endT = parts[1] ? parts[1].trim() : curr.time;
-                    
-                    const periods = [curr.period];
-                    let j = i + 1;
-                    
-                    while (j < teacherSlots.length) {
-                        const pPrev = parseInt(teacherSlots[j-1].period, 10) || -1;
-                        const pCurr = parseInt(teacherSlots[j].period, 10) || -2;
-                        
-                        if (teacherSlots[j].kelas === curr.kelas && pCurr === pPrev + 1) {
-                            totalJP++;
-                            const tjParts = teacherSlots[j].time.split(/[-–]/);
-                            if (tjParts.length > 1) endT = tjParts[1].trim();
-                            periods.push(teacherSlots[j].period);
-                            j++;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    const periodStr = periods.length > 1 ? `Jam ${periods[0]} - ${periods[periods.length - 1]}` : (periods[0] ? `Jam ${periods[0]}` : '-');
-                    const timeStr = `${startT} - ${endT}`;
-
                     if (selectedDay === 'SEMUA' || selectedDay === day) {
+                        const cleanPeriod = String(slot.period).replace(/Jam/gi, '').trim();
                         scheduleList.push({
                             day: day,
-                            time: timeStr,
-                            period: periodStr,
-                            kelas: curr.kelas,
+                            time: slot.time,
+                            period: cleanPeriod,
+                            kelas: slot.kelas,
                             subject: teacher.subject
                         });
                     }
-
-                    i = j;
-                }
+                });
             });
 
             // Update Info Card Guru
@@ -1119,7 +1109,7 @@
                     <td class="p-2.5 text-center"><span class="bg-indigo-900 text-white font-bold px-2.5 py-1 rounded-xl text-[11px] whitespace-nowrap shadow-sm">Kelas ${item.kelas}</span></td>
                     <td class="p-2.5 font-bold text-slate-800 text-left">${item.subject}</td>
                     <td class="p-2.5 text-center">
-                        <button onclick="prepareJournalFromSchedule('${guruCode}', '${item.kelas}', '${item.period} (${formatTimeStr(item.time)})')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 mx-auto transition active:scale-95 shadow">
+                        <button onclick="prepareJournalFromSchedule('${guruCode}', '${item.kelas}', 'Jam ${item.period} (${formatTimeStr(item.time)})')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 mx-auto transition active:scale-95 shadow">
                             <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Isi Jurnal
                         </button>
                     </td>
@@ -1129,7 +1119,7 @@
             lucide.createIcons();
         }
 
-        // Render Tab 3: Class Schedule (Filter Hari & Blok Warna)
+        // Render Tab 3: Class Schedule (Urut Kronologis Jam ke Bawah, Tanpa Teks 'Jam')
         function renderClassSchedule() {
             const selectedClass = document.getElementById('select-kelas-filter').value;
             const selectedDay = document.getElementById('select-hari-kelas').value;
@@ -1171,45 +1161,27 @@
                     });
                 });
 
-                let i = 0;
-                while (i < classSlots.length) {
-                    const curr = classSlots[i];
-                    const parts = curr.time.split(/[-–]/);
-                    let startT = parts[0] ? parts[0].trim() : curr.time;
-                    let endT = parts[1] ? parts[1].trim() : curr.time;
+                // Urutkan slot kelas secara kronologis berdasarkan Jam Ke & Waktu
+                classSlots.sort((a, b) => {
+                    const pA = parseInt(a.period, 10) || 0;
+                    const pB = parseInt(b.period, 10) || 0;
+                    if (pA !== pB) return pA - pB;
+                    return parseMinutesFromTimeStr(a.time) - parseMinutesFromTimeStr(b.time);
+                });
 
-                    const periods = [curr.period];
-                    let j = i + 1;
-
-                    while (j < classSlots.length) {
-                        const pPrev = parseInt(classSlots[j-1].period, 10) || -1;
-                        const pCurr = parseInt(classSlots[j].period, 10) || -2;
-
-                        if (classSlots[j].code === curr.code && pCurr === pPrev + 1) {
-                            const tjParts = classSlots[j].time.split(/[-–]/);
-                            if (tjParts.length > 1) endT = tjParts[1].trim();
-                            periods.push(classSlots[j].period);
-                            j++;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    const periodStr = periods.length > 1 ? `Jam ${periods[0]} - ${periods[periods.length - 1]}` : (periods[0] ? `Jam ${periods[0]}` : '-');
-                    const timeStr = `${startT} - ${endT}`;
-                    const teacher = TEACHERS[curr.code];
-
+                // Tampilkan setiap jam pelajaran berurutan baris demi baris ke bawah
+                classSlots.forEach(slot => {
+                    const cleanPeriod = String(slot.period).replace(/Jam/gi, '').trim();
+                    const teacher = TEACHERS[slot.code];
                     scheduleList.push({
                         day: day,
-                        time: timeStr,
-                        period: periodStr,
-                        code: curr.code,
-                        subject: teacher ? teacher.subject : curr.code,
-                        teacherName: teacher ? `${teacher.name} (${curr.code})` : '-'
+                        time: slot.time,
+                        period: cleanPeriod,
+                        code: slot.code,
+                        subject: teacher ? teacher.subject : slot.code,
+                        teacherName: teacher ? `${teacher.name} (${slot.code})` : '-'
                     });
-
-                    i = j;
-                }
+                });
             });
 
             // Hitung jumlah baris per hari untuk Rowspan
