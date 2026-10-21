@@ -60,8 +60,8 @@
                 <div class="flex items-center gap-1.5">
                     <!-- Status Cloud Indicator -->
                     <div id="badge-cloud-status" class="px-2.5 py-1.5 bg-indigo-800/90 text-xs font-bold rounded-xl flex items-center gap-1.5 border border-indigo-700 shadow-sm">
-                        <span id="icon-cloud-status" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span id="text-cloud-status" class="text-[11px] font-semibold text-indigo-100">Cloud Online</span>
+                        <span id="icon-cloud-status" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span id="text-cloud-status" class="text-[11px] font-semibold text-indigo-100">Menghubungkan...</span>
                     </div>
 
                     <button onclick="openUploadModal()" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-indigo-950 font-bold rounded-xl text-xs flex items-center gap-1 shadow transition active:scale-95 shrink-0">
@@ -589,15 +589,14 @@
     </main>
 
     <script>
-        // KONFIGURASI LENGKAP FIREBASE CLOUD REALTIME DATABASE
-        // Silakan ganti apiKey, authDomain, projectId, storageBucket, dan appId dengan data dari Firebase Console Anda jika diperlukan.
-    const FIREBASE_CONFIG = {
-   apiKey: "AIzaSyDvgo-pIAkS3HdziNMjCqz3Mzmw34xM8Vw",
-    authDomain: "smpn3besuki-jurnal.firebaseapp.com",
-    databaseURL: "https://smpn3besuki-jurnal-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "smpn3besuki-jurnal",
-    storageBucket: "smpn3besuki-jurnal.appspot.com"
-};
+        // KONFIGURASI FIREBASE REALTIME DATABASE
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyDvgo-pIAkS3HdziNMjCqz3Mzmw34xM8Vw",
+            authDomain: "smpn3besuki-jurnal.firebaseapp.com",
+            databaseURL: "https://smpn3besuki-jurnal-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "smpn3besuki-jurnal",
+            storageBucket: "smpn3besuki-jurnal.appspot.com"
+        };
 
         // STYLE AKSI WARNA BLOK PER HARI
         const DAY_COLOR_CLASSES = {
@@ -753,7 +752,7 @@
             document.getElementById('print-date-today').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         });
 
-        // KONEKSI REALTIME FIREBASE LENGKAP
+        // KONEKSI REALTIME FIREBASE DENGAN DETEKSI KONEKSI
         function initDirectFirebaseConnection() {
             const iconStatus = document.getElementById('icon-cloud-status');
             const textStatus = document.getElementById('text-cloud-status');
@@ -764,9 +763,18 @@
                 }
                 firebaseDbRef = firebase.database().ref('smpn3_besuki');
 
-                iconStatus.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
-                textStatus.innerText = "Cloud Online";
+                // Deteksi status koneksi aktif
+                firebase.database().ref('.info/connected').on('value', (snap) => {
+                    if (snap.val() === true) {
+                        iconStatus.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
+                        textStatus.innerText = "Cloud Online";
+                    } else {
+                        iconStatus.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse";
+                        textStatus.innerText = "Menghubungkan...";
+                    }
+                });
 
+                // Sinkronisasi data siswa dari Firebase
                 firebaseDbRef.child('students_db').on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         STUDENTS_DB = snapshot.val();
@@ -775,11 +783,12 @@
                         loadStudentsForJournal();
                     }
                 }, (error) => {
-                    console.warn("Firebase read error:", error);
-                    iconStatus.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
-                    textStatus.innerText = "Cloud Terbatas";
+                    console.error("Firebase read error:", error);
+                    iconStatus.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+                    textStatus.innerText = "Izin Ditolak";
                 });
 
+                // Sinkronisasi data jurnal dari Firebase
                 firebaseDbRef.child('jurnal_db').on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         journalEntries = snapshot.val();
@@ -788,6 +797,7 @@
                     }
                 });
 
+                // Sinkronisasi data jadwal dari Firebase
                 firebaseDbRef.child('schedule_db').on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         RAW_SCHEDULE = snapshot.val();
@@ -799,15 +809,19 @@
                 });
 
             } catch (e) {
-                console.warn("Firebase fallback to local:", e);
-                iconStatus.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+                console.warn("Firebase error fallback to local:", e);
+                iconStatus.className = "w-2.5 h-2.5 rounded-full bg-slate-400";
                 textStatus.innerText = "Cloud Local";
             }
         }
 
+        // SINKRONISASI KE CLOUD DENGAN NOTIFIKASI ERROR
         function syncDataToCloud(key, data) {
             if (firebaseDbRef) {
-                firebaseDbRef.child(key).set(data);
+                firebaseDbRef.child(key).set(data).catch((err) => {
+                    console.error("Gagal menyinkronkan ke Cloud Firebase:", err);
+                    alert("⚠️ Gagal menyimpan ke Cloud Firebase!\nPastikan Aturan (Rules) Realtime Database di Firebase Console sudah diubah menjadi '.read': true, '.write': true.");
+                });
             }
         }
 
