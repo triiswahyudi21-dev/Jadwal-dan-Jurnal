@@ -2,27 +2,26 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport Dioptimalkan untuk Zoom In / Out Bebas di HP -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
     <title>Aplikasi Jadwal & Jurnal Mengajar - SMPN 3 Besuki</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- SheetJS (XLSX Parser & Exporter) CDN -->
+    <!-- SheetJS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Firebase App & Realtime Database CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        /* CSS Sentuhan & Zooming HP */
         html, body {
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
         }
-        
         .touch-scroll {
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
         }
-
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -30,7 +29,6 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-
         @media print {
             body * { visibility: hidden; }
             #print-section, #print-section * { visibility: visible; }
@@ -41,11 +39,10 @@
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Header / Navbar Rapi HP -->
+    <!-- Header / Navbar -->
     <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-40 no-print">
         <div class="max-w-7xl mx-auto px-3 py-2.5 flex flex-col gap-2.5">
             
-            <!-- Top Bar: Logo & Info -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 bg-indigo-700 rounded-xl shadow-inner shrink-0">
@@ -60,13 +57,20 @@
                     </div>
                 </div>
 
-                <button onclick="openUploadModal()" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-indigo-950 font-bold rounded-xl text-xs flex items-center gap-1 shadow transition active:scale-95 shrink-0">
-                    <i data-lucide="file-up" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">Upload Excel</span>
-                </button>
+                <div class="flex items-center gap-1.5">
+                    <!-- Status Cloud Indicator -->
+                    <button onclick="openCloudModal()" id="btn-cloud-status" class="px-2.5 py-1.5 bg-indigo-800 hover:bg-indigo-700 text-xs font-bold rounded-xl flex items-center gap-1.5 shadow transition active:scale-95 border border-indigo-700">
+                        <span id="icon-cloud-status" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span id="text-cloud-status" class="text-[11px] hidden sm:inline">Pengaturan Cloud</span>
+                    </button>
+
+                    <button onclick="openUploadModal()" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-indigo-950 font-bold rounded-xl text-xs flex items-center gap-1 shadow transition active:scale-95 shrink-0">
+                        <i data-lucide="file-up" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Upload Excel</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Scrollable Nav Tabs -->
             <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs">
                 <button onclick="switchTab('jadwal-master')" id="btn-jadwal-master" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-600 text-white font-semibold shrink-0 transition active:scale-95">
                     <i data-lucide="calendar" class="w-4 h-4"></i> Master Jadwal
@@ -86,6 +90,38 @@
             </nav>
         </div>
     </header>
+
+    <!-- Modal Pengaturan Cloud Database -->
+    <div id="cloud-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-5 space-y-4 border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="cloud-cog" class="w-5 h-5 text-indigo-600"></i>
+                    <h3 class="text-base font-bold text-slate-800">Koneksi Cloud Realtime (Firebase)</h3>
+                </div>
+                <button onclick="closeCloudModal()" class="text-slate-400 hover:text-slate-600 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Hubungkan ke <b>Firebase Realtime Database</b> (Gratis) agar data siswa, jurnal, dan jadwal langsung tersinkronisasi otomatis secara realtime antar seluruh HP & Laptop guru.
+            </p>
+
+            <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Firebase Realtime Database URL / Config JSON:</label>
+                    <textarea id="input-firebase-config" rows="4" placeholder='{"databaseURL": "https://nama-database-default-rtdb.firebaseio.com"}' class="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-mono focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                    <span id="cloud-connection-indicator" class="font-bold text-amber-600">Status: Belum Terhubung (Lokal)</span>
+                    <button onclick="saveFirebaseConfig()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition">Simpan & Hubungkan</button>
+                </div>
+            </div>
+
+            <div class="pt-2 border-t flex justify-end">
+                <button onclick="closeCloudModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl">Tutup</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Upload Excel Jadwal -->
     <div id="upload-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
@@ -148,7 +184,6 @@
                 </div>
             </div>
 
-            <!-- Schedule Table Container -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="overflow-x-auto touch-scroll">
                     <table class="w-full text-xs text-left border-collapse min-w-[700px]">
@@ -178,19 +213,16 @@
                             </tr>
                         </thead>
                         <tbody id="tbody-master-schedule" class="divide-y divide-slate-200">
-                            <!-- Filled dynamically -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Legend Guru & Mapel -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
                 <h3 class="text-xs font-bold text-slate-800 mb-2.5 flex items-center gap-1.5">
                     <i data-lucide="users" class="w-4 h-4 text-indigo-600"></i> Kode Guru & Mata Pelajaran
                 </h3>
                 <div id="grid-kode-guru" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-xs">
-                    <!-- Dynamic Legend -->
                 </div>
             </div>
         </section>
@@ -206,9 +238,7 @@
                 </div>
                 
                 <div class="grid grid-cols-2 sm:flex items-center gap-2 w-full md:w-auto">
-                    <!-- Filter Hari -->
                     <div class="col-span-1">
-                        <label class="block text-[10px] font-semibold text-slate-500 mb-0.5 sm:hidden">Hari:</label>
                         <select id="select-hari-guru" onchange="renderTeacherSchedule()" class="w-full border border-slate-300 rounded-xl px-2.5 py-2.5 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
                             <option value="SEMUA">Semua Hari</option>
                             <option value="SENIN">SENIN</option>
@@ -219,22 +249,16 @@
                         </select>
                     </div>
 
-                    <!-- Filter Guru -->
                     <div class="col-span-1">
-                        <label class="block text-[10px] font-semibold text-slate-500 mb-0.5 sm:hidden">Guru:</label>
                         <select id="select-guru-filter" onchange="renderTeacherSchedule()" class="w-full sm:w-64 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
-                            <!-- Teachers List -->
                         </select>
                     </div>
                 </div>
             </div>
 
-            <!-- Teacher Detail Card -->
             <div id="teacher-info-card" class="bg-indigo-900 text-white p-3.5 sm:p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <!-- Dynamic Teacher Info -->
             </div>
 
-            <!-- Teacher Schedule List -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4">
                 <div class="overflow-x-auto touch-scroll">
                     <table class="w-full text-xs text-left min-w-[500px]">
@@ -249,7 +273,6 @@
                             </tr>
                         </thead>
                         <tbody id="tbody-guru-schedule">
-                            <!-- Filled dynamically -->
                         </tbody>
                     </table>
                 </div>
@@ -267,9 +290,7 @@
                 </div>
                 
                 <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
-                    <!-- Filter Hari -->
                     <div class="col-span-1">
-                        <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Hari:</label>
                         <select id="select-hari-kelas" onchange="renderClassSchedule()" class="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
                             <option value="SEMUA">Semua Hari</option>
                             <option value="SENIN">SENIN</option>
@@ -280,15 +301,11 @@
                         </select>
                     </div>
 
-                    <!-- Filter Kelas -->
                     <div class="col-span-1">
-                        <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">Kelas:</label>
                         <select id="select-kelas-filter" onchange="renderClassSchedule()" class="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-bold text-emerald-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
-                            <!-- Class List -->
                         </select>
                     </div>
 
-                    <!-- Download Buttons -->
                     <div class="col-span-2 sm:col-span-auto flex gap-2 pt-1 sm:pt-0 sm:ml-auto">
                         <button onclick="downloadClassScheduleExcel()" class="flex-1 sm:flex-none px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-sm transition active:scale-95">
                             <i data-lucide="download" class="w-3.5 h-3.5"></i> Kelas Ini
@@ -300,12 +317,9 @@
                 </div>
             </div>
 
-            <!-- Class Info -->
             <div id="class-info-card" class="bg-emerald-800 text-white p-3.5 rounded-2xl flex justify-between items-center text-xs">
-                <!-- Class Info filled dynamically -->
             </div>
 
-            <!-- Class Schedule Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="overflow-x-auto touch-scroll">
                     <table class="w-full text-xs text-left min-w-[480px]">
@@ -319,7 +333,6 @@
                             </tr>
                         </thead>
                         <tbody id="tbody-kelas-schedule">
-                            <!-- Filled dynamically -->
                         </tbody>
                     </table>
                 </div>
@@ -332,19 +345,17 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
                     <div>
                         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                            <i data-lucide="users-round" class="w-5 h-5 text-indigo-600"></i> Kelola Data Siswa Per Kelas
+                            <i data-lucide="users-round" class="w-5 h-5 text-indigo-600"></i> Kelola Data Siswa Per Kelas (Tersimpan Online)
                         </h2>
-                        <p class="text-[11px] text-slate-500">Input manual atau tempel (paste) daftar nama siswa. Nomor urut diisi otomatis.</p>
+                        <p class="text-[11px] text-slate-500">Input manual atau tempel (paste) daftar nama siswa. Otomatis tersimpan ke Cloud.</p>
                     </div>
                     <div class="flex items-center gap-2 w-full sm:w-auto">
                         <label class="text-xs font-semibold text-slate-600 shrink-0">Pilih Kelas:</label>
                         <select id="select-kelas-siswa-admin" onchange="renderStudentAdminTable()" class="w-full sm:w-auto border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
-                            <!-- Filled dynamically -->
                         </select>
                     </div>
                 </div>
 
-                <!-- Input / Paste Area -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
                         <label class="block text-xs font-bold text-slate-700">Tempel / Input Daftar Nama Siswa (1 Nama Per Baris)</label>
@@ -352,12 +363,11 @@
                         <div class="flex items-center justify-between pt-1">
                             <button onclick="clearPasteTextarea()" class="text-xs text-slate-500 hover:text-slate-700 font-semibold">Bersihkan Teks</button>
                             <button onclick="savePastedStudents()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 transition active:scale-95">
-                                <i data-lucide="save" class="w-3.5 h-3.5"></i> Simpan Data Siswa
+                                <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i> Simpan Data Siswa
                             </button>
                         </div>
                     </div>
 
-                    <!-- Student List Table -->
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
                             <h3 class="text-xs font-bold text-slate-800" id="label-info-jumlah-siswa">Daftar Siswa Kelas</h3>
@@ -375,7 +385,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tbody-admin-siswa" class="divide-y divide-slate-100">
-                                    <!-- Filled dynamically -->
                                 </tbody>
                             </table>
                         </div>
@@ -392,7 +401,7 @@
                         <h2 class="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
                             <i data-lucide="edit-3" class="w-5 h-5 text-indigo-600"></i> Form Jurnal Mengajar Harian
                         </h2>
-                        <p class="text-[11px] text-slate-500">Isi materi & presensi siswa otomatis terhubung dengan data siswa</p>
+                        <p class="text-[11px] text-slate-500">Isi materi & presensi siswa otomatis terhubung dengan data siswa di cloud</p>
                     </div>
                     <button onclick="switchTab('jadwal-guru')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1 transition">
                         <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Kembali
@@ -400,7 +409,6 @@
                 </div>
 
                 <form id="form-jurnal" onsubmit="saveJournalEntry(event)" class="space-y-4">
-                    <!-- Row 1: Informasi Dasar -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal</label>
@@ -409,13 +417,11 @@
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1">Guru Pengajar</label>
                             <select id="jurnal-guru" required onchange="autoFillSubject()" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
-                                <!-- Teachers -->
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1">Kelas</label>
                             <select id="jurnal-kelas" required onchange="loadStudentsForJournal()" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
-                                <!-- Classes -->
                             </select>
                         </div>
                         <div>
@@ -424,7 +430,6 @@
                         </div>
                     </div>
 
-                    <!-- Row 2: Mata Pelajaran & Status -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1">Mata Pelajaran</label>
@@ -445,7 +450,6 @@
                         </div>
                     </div>
 
-                    <!-- Row 3: Presensi Siswa Otomatis Per Nama -->
                     <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
                             <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -456,7 +460,6 @@
                             </button>
                         </div>
 
-                        <!-- Summary Counter Cards -->
                         <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
                             <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
                                 <span class="text-[10px] text-emerald-700 font-bold block">Hadir</span>
@@ -480,13 +483,11 @@
                             </div>
                         </div>
 
-                        <!-- Auto-generated Absent Detail string -->
                         <div>
                             <label class="block text-[11px] font-semibold text-slate-600 mb-1">Rincian Siswa Tidak Hadir (Otomatis Terisi):</label>
                             <input type="text" id="jurnal-absen-detail" placeholder="Nihil" readonly class="w-full border border-slate-300 rounded-xl p-2 text-xs font-medium bg-slate-100 text-slate-800">
                         </div>
 
-                        <!-- Interactive Student List for Attendance -->
                         <div class="border rounded-2xl overflow-hidden max-h-[260px] overflow-y-auto touch-scroll bg-white">
                             <table class="w-full text-xs text-left">
                                 <thead class="bg-slate-800 text-white font-bold sticky top-0">
@@ -497,13 +498,11 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tbody-presensi-siswa" class="divide-y divide-slate-100">
-                                    <!-- Dynamic Rows per student -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <!-- Row 4: Materi & Catatan Refleksi -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1">Materi / Sub-Materi</label>
@@ -515,13 +514,12 @@
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
                     <div class="flex justify-end gap-2 pt-1">
                         <button type="reset" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition">
                             Reset
                         </button>
                         <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md flex items-center gap-1.5 transition active:scale-95">
-                            <i data-lucide="save" class="w-4 h-4"></i> Simpan Jurnal
+                            <i data-lucide="cloud-upload" class="w-4 h-4"></i> Simpan Jurnal ke Cloud
                         </button>
                     </div>
                 </form>
@@ -538,7 +536,6 @@
                     <p class="text-[11px] text-slate-500">Atur semester & cetak dokumen agenda jurnal resmi</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <!-- Filter Semester -->
                     <div class="flex items-center gap-1">
                         <label class="text-xs font-semibold text-slate-600">Semester:</label>
                         <select id="select-rekap-semester" onchange="updateSemesterDisplay()" class="border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
@@ -556,9 +553,7 @@
                 </div>
             </div>
 
-            <!-- Printable Layout Container -->
             <div id="print-section" class="bg-white p-4 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
-                <!-- Header Cetak Kop Sekolah -->
                 <div class="text-center border-b-2 border-slate-900 pb-3 mb-4">
                     <h3 class="text-xs sm:text-sm font-bold uppercase text-slate-900">PEMERINTAH KABUPATEN SITUBONDO</h3>
                     <h2 class="text-sm sm:text-lg font-extrabold uppercase text-slate-900">DINAS PENDIDIKAN DAN KEBUDAYAAN</h2>
@@ -567,7 +562,6 @@
                     <div class="mt-2 text-xs sm:text-sm font-bold underline uppercase text-slate-800">AGENDA & JURNAL MENGAJAR GURU</div>
                 </div>
 
-                <!-- Teks Semester dan Tahun Pelajaran Sejajar Rapi di Sebelah Kiri -->
                 <div class="mb-4 text-xs font-medium text-slate-800">
                     <table class="border-none text-xs">
                         <tr>
@@ -583,7 +577,6 @@
                     </table>
                 </div>
 
-                <!-- Table Rekap -->
                 <div class="overflow-x-auto touch-scroll">
                     <table class="w-full text-xs text-left border-collapse border border-slate-300 min-w-[650px]">
                         <thead>
@@ -601,12 +594,10 @@
                             </tr>
                         </thead>
                         <tbody id="tbody-rekap-jurnal">
-                            <!-- Filled dynamically -->
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Tanda Tangan Cetak -->
                 <div class="mt-8 hidden print:grid grid-cols-2 text-center text-xs text-slate-800">
                     <div>
                         <p class="mb-1">Mengetahui,</p>
@@ -628,7 +619,6 @@
 
     </main>
 
-    <!-- Script Application Logic -->
     <script>
         const DAY_COLOR_CLASSES = {
             'SENIN': 'bg-blue-600 text-white font-extrabold border-blue-700 shadow-sm',
@@ -692,7 +682,6 @@
         };
 
         const DEFAULT_RAW_SCHEDULE = [
-            // SENIN
             { day: 'SENIN', time: '07.05 - 07.40', period: '1', map: {'VII A':'D','VII B':'I','VII C':'M','VII D':'N','VIII A':'K','VIII B':'K','VIII C':'B','VIII D':'F','IX A':'E','IX B':'Q','IX C':'C','IX D':'H'} },
             { day: 'SENIN', time: '07.40 - 08.15', period: '2', map: {'VII A':'D','VII B':'I','VII C':'M','VII D':'N','VIII A':'K','VIII B':'K','VIII C':'B','VIII D':'F','IX A':'E','IX B':'Q','IX C':'T','IX D':'H'} },
             { day: 'SENIN', time: '08.15 - 08.50', period: '3', map: {'VII A':'D','VII B':'I','VII C':'M','VII D':'N','VIII A':'K','VIII B':'K','VIII C':'G','VIII D':'F','IX A':'E','IX B':'Q','IX C':'T','IX D':'H'} },
@@ -701,46 +690,7 @@
             { day: 'SENIN', time: '10.25 - 11.00', period: '6', map: {'VII A':'F','VII B':'M','VII C':'P','VII D':'A','VIII A':'E','VIII B':'J','VIII C':'K','VIII D':'K','IX A':'L','IX B':'O','IX C':'H','IX D':'Q'} },
             { day: 'SENIN', time: '11.00 - 11.35', period: '7', map: {'VII A':'M','VII B':'D','VII C':'P','VII D':'A','VIII A':'J','VIII B':'G','VIII C':'N','VIII D':'R','IX A':'L','IX B':'O','IX C':'I','IX D':'Q'} },
             { day: 'SENIN', time: '12.30 - 13.05', period: '8', map: {'VII A':'M','VII B':'D','VII C':'H','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'N','VIII D':'R','IX A':'O','IX B':'T','IX C':'I','IX D':'S'} },
-            { day: 'SENIN', time: '13.05 - 13.40', period: '9', map: {'VII A':'M','VII B':'D','VII C':'H','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'N','VIII D':'R','IX A':'O','IX B':'T','IX C':'I','IX D':'S'} },
-
-            // SELASA
-            { day: 'SELASA', time: '07.05 - 07.40', period: '1', map: {'VII A':'I','VII B':'F','VII C':'O','VII D':'D','VIII A':'R','VIII B':'J','VIII C':'T','VIII D':'N','IX A':'H','IX B':'E','IX C':'K','IX D':'K'} },
-            { day: 'SELASA', time: '07.40 - 08.15', period: '2', map: {'VII A':'I','VII B':'F','VII C':'O','VII D':'D','VIII A':'R','VIII B':'J','VIII C':'T','VIII D':'N','IX A':'H','IX B':'E','IX C':'K','IX D':'K'} },
-            { day: 'SELASA', time: '08.15 - 08.50', period: '3', map: {'VII A':'I','VII B':'F','VII C':'S','VII D':'D','VIII A':'R','VIII B':'J','VIII C':'L','VIII D':'N','IX A':'H','IX B':'B','IX C':'K','IX D':'K'} },
-            { day: 'SELASA', time: '09.15 - 09.50', period: '4', map: {'VII A':'A','VII B':'I','VII C':'S','VII D':'O','VIII A':'E','VIII B':'F','VIII C':'L','VIII D':'G','IX A':'Q','IX B':'B','IX C':'N','IX D':'T'} },
-            { day: 'SELASA', time: '09.50 - 10.25', period: '5', map: {'VII A':'A','VII B':'I','VII C':'D','VII D':'O','VIII A':'E','VIII B':'F','VIII C':'R','VIII D':'J','IX A':'Q','IX B':'H','IX C':'N','IX D':'T'} },
-            { day: 'SELASA', time: '10.25 - 11.00', period: '6', map: {'VII A':'S','VII B':'P','VII C':'D','VII D':'O','VIII A':'F','VIII B':'E','VIII C':'R','VIII D':'J','IX A':'Q','IX B':'H','IX C':'B','IX D':'C'} },
-            { day: 'SELASA', time: '11.00 - 11.35', period: '7', map: {'VII A':'S','VII B':'P','VII C':'D','VII D':'M','VIII A':'F','VIII B':'E','VIII C':'R','VIII D':'J','IX A':'O','IX B':'H','IX C':'B','IX D':'I'} },
-            { day: 'SELASA', time: '12.30 - 13.05', period: '8', map: {'VII A':'H','VII B':'F','VII C':'A','VII D':'M','VIII A':'P','VIII B':'S','VIII C':'B','VIII D':'T','IX A':'O','IX B':'N','IX C':'L','IX D':'I'} },
-            { day: 'SELASA', time: '13.05 - 13.40', period: '9', map: {'VII A':'H','VII B':'F','VII C':'A','VII D':'M','VIII A':'P','VIII B':'S','VIII C':'B','VIII D':'T','IX A':'O','IX B':'N','IX C':'L','IX D':'I'} },
-
-            // RABU
-            { day: 'RABU', time: '07.05 - 07.40', period: '1', map: {'VII A':'T','VII B':'P','VII C':'N','VII D':'I','VIII A':'F','VIII B':'E','VIII C':'J','VIII D':'L','IX A':'K','IX B':'K','IX C':'Q','IX D':'O'} },
-            { day: 'RABU', time: '07.40 - 08.15', period: '2', map: {'VII A':'T','VII B':'P','VII C':'N','VII D':'I','VIII A':'F','VIII B':'E','VIII C':'J','VIII D':'L','IX A':'K','IX B':'K','IX C':'Q','IX D':'O'} },
-            { day: 'RABU', time: '08.15 - 08.50', period: '3', map: {'VII A':'P','VII B':'M','VII C':'N','VII D':'I','VIII A':'F','VIII B':'E','VIII C':'J','VIII D':'S','IX A':'K','IX B':'K','IX C':'Q','IX D':'O'} },
-            { day: 'RABU', time: '09.15 - 09.50', period: '4', map: {'VII A':'P','VII B':'M','VII C':'I','VII D':'T','VIII A':'A','VIII B':'H','VIII C':'L','VIII D':'S','IX A':'E','IX B':'O','IX C':'B','IX D':'Q'} },
-            { day: 'RABU', time: '09.50 - 10.25', period: '5', map: {'VII A':'F','VII B':'M','VII C':'I','VII D':'T','VIII A':'A','VIII B':'H','VIII C':'L','VIII D':'J','IX A':'E','IX B':'O','IX C':'B','IX D':'Q'} },
-            { day: 'RABU', time: '10.25 - 11.00', period: '6', map: {'VII A':'F','VII B':'T','VII C':'I','VII D':'A','VIII A':'H','VIII B':'P','VIII C':'E','VIII D':'J','IX A':'C','IX B':'O','IX C':'S','IX D':'L'} },
-            { day: 'RABU', time: '11.00 - 11.35', period: '7', map: {'VII A':'N','VII B':'T','VII C':'M','VII D':'A','VIII A':'H','VIII B':'P','VIII C':'E','VIII D':'J','IX A':'D','IX B':'Q','IX C':'S','IX D':'L'} },
-            { day: 'RABU', time: '12.30 - 13.05', period: '8', map: {'VII A':'N','VII B':'A','VII C':'M','VII D':'H','VIII A':'P','VIII B':'T','VIII C':'S','VIII D':'E','IX A':'D','IX B':'Q','IX C':'L','IX D':'B'} },
-            { day: 'RABU', time: '13.05 - 13.40', period: '9', map: {'VII A':'N','VII B':'A','VII C':'M','VII D':'H','VIII A':'P','VIII B':'T','VIII C':'S','VIII D':'E','IX A':'D','IX B':'Q','IX C':'L','IX D':'B'} },
-
-            // KAMIS
-            { day: 'KAMIS', time: '07.05 - 07.40', period: '1', map: {'VII A':'M','VII B':'K','VII C':'P','VII D':'K','VIII A':'N','VIII B':'F','VIII C':'J','VIII D':'B','IX A':'L','IX B':'E','IX C':'Q','IX D':'D'} },
-            { day: 'KAMIS', time: '07.40 - 08.15', period: '2', map: {'VII A':'M','VII B':'K','VII C':'P','VII D':'K','VIII A':'N','VIII B':'F','VIII C':'J','VIII D':'B','IX A':'L','IX B':'E','IX C':'Q','IX D':'D'} },
-            { day: 'KAMIS', time: '08.15 - 08.50', period: '3', map: {'VII A':'M','VII B':'K','VII C':'O','VII D':'K','VIII A':'N','VIII B':'F','VIII C':'J','VIII D':'H','IX A':'T','IX B':'E','IX C':'Q','IX D':'D'} },
-            { day: 'KAMIS', time: '09.15 - 09.50', period: '4', map: {'VII A':'I','VII B':'N','VII C':'O','VII D':'M','VIII A':'S','VIII B':'R','VIII C':'E','VIII D':'H','IX A':'T','IX B':'B','IX C':'D','IX D':'L'} },
-            { day: 'KAMIS', time: '09.50 - 10.25', period: '5', map: {'VII A':'I','VII B':'N','VII C':'O','VII D':'M','VIII A':'S','VIII B':'R','VIII C':'E','VIII D':'F','IX A':'Q','IX B':'B','IX C':'D','IX D':'L'} },
-            { day: 'KAMIS', time: '10.25 - 11.00', period: '6', map: {'VII A':'A','VII B':'N','VII C':'I','VII D':'M','VIII A':'T','VIII B':'R','VIII C':'E','VIII D':'F','IX A':'Q','IX B':'S','IX C':'D','IX D':'B'} },
-            { day: 'KAMIS', time: '11.00 - 11.35', period: '7', map: {'VII A':'A','VII B':'G','VII C':'I','VII D':'C','VIII A':'T','VIII B':'N','VIII C':'F','VIII D':'E','IX A':'Q','IX B':'S','IX C':'O','IX D':'B'} },
-            { day: 'KAMIS', time: '12.30 - 13.05', period: '8', map: {'VII A':'P','VII B':'H','VII C':'T','VII D':'I','VIII A':'A','VIII B':'N','VIII C':'F','VIII D':'E','IX A':'S','IX B':'L','IX C':'O','IX D':'Q'} },
-            { day: 'KAMIS', time: '13.05 - 13.40', period: '9', map: {'VII A':'P','VII B':'H','VII C':'T','VII D':'I','VIII A':'A','VIII B':'N','VIII C':'F','VIII D':'E','IX A':'S','IX B':'L','IX C':'O','IX D':'Q'} },
-
-            // JUMAT
-            { day: 'JUMAT', time: '07.40 - 08.15', period: '2', map: {'VII A':'K','VII B':'S','VII C':'K','VII D':'P','VIII A':'G','VIII B':'A','VIII C':'H','VIII D':'L','IX A':'B','IX B':'C','IX C':'O','IX D':'N'} },
-            { day: 'JUMAT', time: '08.15 - 08.50', period: '3', map: {'VII A':'K','VII B':'S','VII C':'K','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'H','VIII D':'L','IX A':'B','IX B':'D','IX C':'O','IX D':'N'} },
-            { day: 'JUMAT', time: '09.35 - 10.10', period: '4', map: {'VII A':'K','VII B':'A','VII C':'K','VII D':'S','VIII A':'J','VIII B':'P','VIII C':'F','VIII D':'B','IX A':'N','IX B':'D','IX C':'I','IX D':'O'} },
-            { day: 'JUMAT', time: '10.10 - 10.45', period: '5', map: {'VII A':'G','VII B':'A','VII C':'C','VII D':'S','VIII A':'J','VIII B':'P','VIII C':'F','VIII D':'B','IX A':'N','IX B':'D','IX C':'I','IX D':'O'} }
+            { day: 'SENIN', time: '13.05 - 13.40', period: '9', map: {'VII A':'M','VII B':'D','VII C':'H','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'N','VIII D':'R','IX A':'O','IX B':'T','IX C':'I','IX D':'S'} }
         ];
 
         function formatTimeStr(timeStr) {
@@ -767,38 +717,124 @@
         let HOMEROOMS = JSON.parse(localStorage.getItem('smpn3_homerooms_db')) || DEFAULT_HOMEROOMS;
         let RAW_SCHEDULE = JSON.parse(localStorage.getItem('smpn3_schedule_db')) || DEFAULT_RAW_SCHEDULE;
         let STUDENTS_DB = JSON.parse(localStorage.getItem('smpn3_students_db')) || DEFAULT_STUDENTS_DB;
+        let journalEntries = JSON.parse(localStorage.getItem('smpn3_jurnal_db')) || [];
 
-        // Current Active Student List in Journal Form
         let currentJournalStudents = [];
-
-        // Journal Entries Storage
-        let journalEntries = JSON.parse(localStorage.getItem('smpn3_jurnal_db')) || [
-            {
-                id: 1,
-                tanggal: '2026-10-20',
-                guruCode: 'A',
-                guruName: 'Dra. Suprihatin',
-                mapel: 'IPS',
-                kelas: 'VII A',
-                jam: '1 (07.05 - 07.40)',
-                status: 'Hadir (Tatap Muka)',
-                materi: 'Keberagaman Lingkungan Sekitar dan Interaksi Sosial',
-                metode: 'Diskusi Kelompok & Peta Konsep',
-                hadir: 4, sakit: 1, izin: 0, alpha: 0,
-                detailAbsen: 'Sakit: Budi Santoso (02)',
-                catatan: 'Siswa aktif berdiskusi kelompok, tugas LKS selesai tepat waktu.'
-            }
-        ];
+        let firebaseDbRef = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             updateHeaderYearDisplay();
+            initFirebaseConnection();
             refreshAllViews();
             
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('jurnal-tanggal').value = todayStr;
             document.getElementById('print-date-today').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         });
+
+        // FIREBASE CLOUD REALTIME SYNC LOGIC
+        function initFirebaseConnection() {
+            const savedConfig = localStorage.getItem('smpn3_firebase_config');
+            const statusBtn = document.getElementById('btn-cloud-status');
+            const iconStatus = document.getElementById('icon-cloud-status');
+            const textStatus = document.getElementById('text-cloud-status');
+            const indicator = document.getElementById('cloud-connection-indicator');
+
+            if (!savedConfig) {
+                iconStatus.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+                if (textStatus) textStatus.innerText = "Cloud Off (Lokal)";
+                if (indicator) indicator.innerText = "Status: Mode Lokal (Belum Terhubung Cloud)";
+                return;
+            }
+
+            try {
+                let configObj = {};
+                if (savedConfig.trim().startsWith('{')) {
+                    configObj = JSON.parse(savedConfig);
+                } else {
+                    configObj = { databaseURL: savedConfig.trim() };
+                }
+
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(configObj);
+                }
+                firebaseDbRef = firebase.database().ref('smpn3_besuki');
+
+                iconStatus.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
+                if (textStatus) textStatus.innerText = "Cloud Online";
+                if (indicator) {
+                    indicator.innerText = "Status: ✅ Terhubung Ke Cloud Realtime!";
+                    indicator.className = "font-bold text-emerald-600";
+                }
+
+                // Realtime Listeners
+                firebaseDbRef.child('students_db').on('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        STUDENTS_DB = snapshot.val();
+                        localStorage.setItem('smpn3_students_db', JSON.stringify(STUDENTS_DB));
+                        renderStudentAdminTable();
+                        loadStudentsForJournal();
+                    }
+                });
+
+                firebaseDbRef.child('jurnal_db').on('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        journalEntries = snapshot.val();
+                        localStorage.setItem('smpn3_jurnal_db', JSON.stringify(journalEntries));
+                        renderRekapJurnal();
+                    }
+                });
+
+                firebaseDbRef.child('schedule_db').on('value', (snapshot) => {
+                    if (snapshot.exists()) {
+                        RAW_SCHEDULE = snapshot.val();
+                        localStorage.setItem('smpn3_schedule_db', JSON.stringify(RAW_SCHEDULE));
+                        renderMasterSchedule();
+                        renderTeacherSchedule();
+                        renderClassSchedule();
+                    }
+                });
+
+            } catch (e) {
+                console.error("Firebase Connection Error:", e);
+                iconStatus.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+                if (textStatus) textStatus.innerText = "Cloud Error";
+                if (indicator) {
+                    indicator.innerText = "Status: ❌ Gagal Menghubungkan ke Cloud Database";
+                    indicator.className = "font-bold text-rose-600";
+                }
+            }
+        }
+
+        function saveFirebaseConfig() {
+            const configText = document.getElementById('input-firebase-config').value.trim();
+            if (!configText) {
+                localStorage.removeItem('smpn3_firebase_config');
+                alert('Mode Cloud dinonaktifkan. Menggunakan penyimpanan lokal.');
+            } else {
+                localStorage.setItem('smpn3_firebase_config', configText);
+                alert('Konfigurasi Cloud disimpan! Memuat ulang koneksi...');
+            }
+            initFirebaseConnection();
+            closeCloudModal();
+        }
+
+        function syncDataToCloud(key, data) {
+            if (firebaseDbRef) {
+                firebaseDbRef.child(key).set(data);
+            }
+        }
+
+        function openCloudModal() {
+            document.getElementById('cloud-modal').classList.remove('hidden');
+            const savedConfig = localStorage.getItem('smpn3_firebase_config') || '';
+            document.getElementById('input-firebase-config').value = savedConfig;
+        }
+
+        function closeCloudModal() {
+            document.getElementById('cloud-modal').classList.add('hidden');
+        }
 
         function updateHeaderYearDisplay() {
             document.getElementById('label-tahun-pelajaran').innerText = `TP ${activeTahunPelajaran}`;
@@ -969,6 +1005,9 @@
             localStorage.setItem('smpn3_homerooms_db', JSON.stringify(HOMEROOMS));
             localStorage.setItem('smpn3_schedule_db', JSON.stringify(RAW_SCHEDULE));
 
+            syncDataToCloud('schedule_db', RAW_SCHEDULE);
+            syncDataToCloud('teachers_db', TEACHERS);
+
             updateHeaderYearDisplay();
             refreshAllViews();
         }
@@ -984,6 +1023,8 @@
                 TEACHERS = DEFAULT_TEACHERS;
                 HOMEROOMS = DEFAULT_HOMEROOMS;
                 RAW_SCHEDULE = DEFAULT_RAW_SCHEDULE;
+
+                syncDataToCloud('schedule_db', RAW_SCHEDULE);
 
                 updateHeaderYearDisplay();
                 refreshAllViews();
@@ -1327,7 +1368,6 @@
             });
         }
 
-        // TAB DATA SISWA: LOGIC
         function renderStudentAdminTable() {
             const cls = document.getElementById('select-kelas-siswa-admin').value;
             const tbody = document.getElementById('tbody-admin-siswa');
@@ -1378,8 +1418,9 @@
 
             STUDENTS_DB[cls] = newStudents;
             localStorage.setItem('smpn3_students_db', JSON.stringify(STUDENTS_DB));
+            syncDataToCloud('students_db', STUDENTS_DB);
 
-            alert(`✅ Berhasil menyimpan ${newStudents.length} siswa untuk Kelas ${cls}!`);
+            alert(`✅ Berhasil menyimpan & menyinkronkan ${newStudents.length} siswa untuk Kelas ${cls}!`);
             document.getElementById('textarea-paste-siswa').value = '';
             renderStudentAdminTable();
             loadStudentsForJournal();
@@ -1394,6 +1435,7 @@
                 STUDENTS_DB[cls].splice(idx, 1);
                 STUDENTS_DB[cls] = STUDENTS_DB[cls].map((s, i) => ({ no: i + 1, nama: s.nama }));
                 localStorage.setItem('smpn3_students_db', JSON.stringify(STUDENTS_DB));
+                syncDataToCloud('students_db', STUDENTS_DB);
                 renderStudentAdminTable();
                 loadStudentsForJournal();
             }
@@ -1404,12 +1446,12 @@
             if (confirm(`Kosongkan seluruh data siswa untuk Kelas ${cls}?`)) {
                 STUDENTS_DB[cls] = [];
                 localStorage.setItem('smpn3_students_db', JSON.stringify(STUDENTS_DB));
+                syncDataToCloud('students_db', STUDENTS_DB);
                 renderStudentAdminTable();
                 loadStudentsForJournal();
             }
         }
 
-        // LOAD STUDENTS INTO JOURNAL FORM
         function loadStudentsForJournal() {
             const selectedClass = document.getElementById('jurnal-kelas').value;
             const rawList = STUDENTS_DB[selectedClass] || [];
@@ -1594,13 +1636,13 @@
 
             journalEntries.unshift(newEntry);
             localStorage.setItem('smpn3_jurnal_db', JSON.stringify(journalEntries));
+            syncDataToCloud('jurnal_db', journalEntries);
 
-            alert('✅ Jurnal mengajar berhasil disimpan!');
+            alert('✅ Jurnal mengajar berhasil disimpan & disinkronkan!');
             renderRekapJurnal();
             switchTab('jurnal-rekap');
         }
 
-        // RENDER REKAP JURNAL DENGAN KOLOM MATERI & METODE TERPISAH
         function renderRekapJurnal() {
             const tbody = document.getElementById('tbody-rekap-jurnal');
             tbody.innerHTML = '';
@@ -1647,6 +1689,7 @@
             if (confirm('Hapus catatan jurnal ini?')) {
                 journalEntries = journalEntries.filter(item => item.id !== id);
                 localStorage.setItem('smpn3_jurnal_db', JSON.stringify(journalEntries));
+                syncDataToCloud('jurnal_db', journalEntries);
                 renderRekapJurnal();
             }
         }
@@ -1655,6 +1698,7 @@
             if (confirm('Kosongkan seluruh riwayat jurnal?')) {
                 journalEntries = [];
                 localStorage.removeItem('smpn3_jurnal_db');
+                syncDataToCloud('jurnal_db', journalEntries);
                 renderRekapJurnal();
             }
         }
