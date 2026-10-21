@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport Dioptimalkan untuk Zoom In / Out Bebas di HP -->
+    <!-- Viewport Dioptimalkan untuk HP, Tablet, dan Laptop -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
     <title>Aplikasi Jadwal & Jurnal Mengajar - SMPN 3 Besuki</title>
     <!-- Tailwind CSS CDN -->
@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- SheetJS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Firebase App & Realtime Database SDK (Compat Mode) -->
+    <!-- Firebase SDK CDN -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -40,11 +40,10 @@
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Header / Navbar Rapi -->
+    <!-- Header / Navbar -->
     <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-40 no-print">
         <div class="max-w-7xl mx-auto px-3 py-2.5 flex flex-col gap-2.5">
             
-            <!-- Top Bar: Logo & Info -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 bg-indigo-700 rounded-xl shadow-inner shrink-0">
@@ -60,7 +59,7 @@
                 </div>
 
                 <div class="flex items-center gap-1.5">
-                    <!-- Status Cloud Indicator (Terpasang Langsung) -->
+                    <!-- Status Cloud Indicator -->
                     <div id="badge-cloud-status" class="px-2.5 py-1.5 bg-indigo-800/90 text-xs font-bold rounded-xl flex items-center gap-1.5 border border-indigo-700 shadow-sm">
                         <span id="icon-cloud-status" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                         <span id="text-cloud-status" class="text-[11px] font-semibold text-indigo-100">Cloud Online</span>
@@ -73,7 +72,7 @@
                 </div>
             </div>
 
-            <!-- Navigation Tabs -->
+            <!-- Scrollable Nav Tabs -->
             <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs">
                 <button onclick="switchTab('jadwal-master')" id="btn-jadwal-master" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-600 text-white font-semibold shrink-0 transition active:scale-95">
                     <i data-lucide="calendar" class="w-4 h-4"></i> Master Jadwal
@@ -82,7 +81,7 @@
                     <i data-lucide="user-check" class="w-4 h-4"></i> Jadwal Guru
                 </button>
                 <button onclick="switchTab('jadwal-kelas')" id="btn-jadwal-kelas" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
-                    <i data-lucide="layout-grid" class="w-4 h-4"></i> Jadwal Kelas
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i> Jadwal Siswa
                 </button>
                 <button onclick="switchTab('data-siswa')" id="btn-data-siswa" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
                     <i data-lucide="users-round" class="w-4 h-4"></i> Data Siswa
@@ -198,19 +197,19 @@
             </div>
         </section>
 
-        <!-- TAB 2: JADWAL PER GURU -->
+        <!-- TAB 2: JADWAL PER GURU (BLOK WARNA & HARI TERGABUNG) -->
         <section id="tab-jadwal-guru" class="tab-content hidden space-y-3">
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                 <div>
                     <h2 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
                         <i data-lucide="user" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Jadwal Mengajar Guru
                     </h2>
-                    <p class="text-[11px] text-slate-500">Filter berdasarkan hari atau tampilkan semua jadwal (Jam ke tersusun urut kronologis ke bawah)</p>
+                    <p class="text-[11px] text-slate-500">Tampilan modern dengan pengelompokan hari & aksen warna</p>
                 </div>
                 
                 <div class="grid grid-cols-2 sm:flex items-center gap-2 w-full md:w-auto">
                     <div class="col-span-1">
-                        <select id="select-hari-guru" onchange="renderTeacherSchedule()" class="w-full border border-slate-300 rounded-xl px-2.5 py-2.5 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                        <select id="select-hari-guru" onchange="renderTeacherSchedule()" class="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
                             <option value="SEMUA">Semua Hari</option>
                             <option value="SENIN">SENIN</option>
                             <option value="SELASA">SELASA</option>
@@ -221,7 +220,7 @@
                     </div>
 
                     <div class="col-span-1">
-                        <select id="select-guru-filter" onchange="renderTeacherSchedule()" class="w-full sm:w-64 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                        <select id="select-guru-filter" onchange="renderTeacherSchedule()" class="w-full sm:w-64 border border-slate-300 rounded-xl p-2 text-xs font-bold text-slate-800 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
                         </select>
                     </div>
                 </div>
@@ -230,17 +229,17 @@
             <div id="teacher-info-card" class="bg-indigo-900 text-white p-3.5 sm:p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="overflow-x-auto touch-scroll">
-                    <table class="w-full text-xs text-left min-w-[500px]">
+                    <table class="w-full text-xs text-left min-w-[500px] border-collapse">
                         <thead>
-                            <tr class="bg-slate-800 text-white uppercase text-[11px] font-bold border-b text-center">
-                                <th class="p-2.5 w-24">Hari</th>
-                                <th class="p-2.5 w-28">Waktu</th>
-                                <th class="p-2.5 w-20">Jam Ke</th>
-                                <th class="p-2.5 w-20">Kelas</th>
-                                <th class="p-2.5 text-left">Mata Pelajaran</th>
-                                <th class="p-2.5 w-24">Aksi</th>
+                            <tr class="bg-slate-800 text-white uppercase text-[11px] font-bold text-center">
+                                <th class="p-2.5 w-24">HARI</th>
+                                <th class="p-2.5 w-28">WAKTU</th>
+                                <th class="p-2.5 w-20">JAM KE</th>
+                                <th class="p-2.5 w-24">KELAS</th>
+                                <th class="p-2.5 text-left">MATA PELAJARAN</th>
+                                <th class="p-2.5 w-24">AKSI</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-guru-schedule">
@@ -250,14 +249,14 @@
             </div>
         </section>
 
-        <!-- TAB 3: JADWAL PER KELAS -->
+        <!-- TAB 3: JADWAL SISWA / KELAS (BLOK WARNA & HARI TERGABUNG) -->
         <section id="tab-jadwal-kelas" class="tab-content hidden space-y-3">
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
                 <div>
                     <h2 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
-                        <i data-lucide="school" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Jadwal Pelajaran Per Kelas
+                        <i data-lucide="school" class="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600"></i> Jadwal Pelajaran Siswa (Per Kelas)
                     </h2>
-                    <p class="text-[11px] text-slate-500">Format waktu & angka rapi, siap unduh ke file Excel</p>
+                    <p class="text-[11px] text-slate-500">Daftar mata pelajaran per kelas dengan blok warna per hari</p>
                 </div>
                 
                 <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
@@ -293,14 +292,14 @@
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="overflow-x-auto touch-scroll">
-                    <table class="w-full text-xs text-left min-w-[480px]">
+                    <table class="w-full text-xs text-left min-w-[480px] border-collapse">
                         <thead>
                             <tr class="bg-slate-800 text-white font-bold text-center">
-                                <th class="p-2 border border-slate-700 w-24">HARI</th>
-                                <th class="p-2 border border-slate-700 w-28 whitespace-nowrap">WAKTU</th>
-                                <th class="p-2 border border-slate-700 w-20">JAM KE</th>
-                                <th class="p-2 border border-slate-700 text-left">MATA PELAJARAN</th>
-                                <th class="p-2 border border-slate-700 text-left">GURU PENGAJAR</th>
+                                <th class="p-2.5 border border-slate-700 w-24">HARI</th>
+                                <th class="p-2.5 border border-slate-700 w-28 whitespace-nowrap">WAKTU</th>
+                                <th class="p-2.5 border border-slate-700 w-20">JAM KE</th>
+                                <th class="p-2.5 border border-slate-700 text-left">MATA PELAJARAN</th>
+                                <th class="p-2.5 border border-slate-700 text-left">GURU PENGAJAR</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-kelas-schedule">
@@ -318,7 +317,7 @@
                         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
                             <i data-lucide="users-round" class="w-5 h-5 text-indigo-600"></i> Kelola Data Siswa Per Kelas (Tersimpan di Cloud)
                         </h2>
-                        <p class="text-[11px] text-slate-500">Input manual atau tempel (paste) daftar nama siswa. Nomor urut diisi otomatis.</p>
+                        <p class="text-[11px] text-slate-500">Input manual atau tempel (paste) daftar nama siswa. Nomor urut terisi otomatis.</p>
                     </div>
                     <div class="flex items-center gap-2 w-full sm:w-auto">
                         <label class="text-xs font-semibold text-slate-600 shrink-0">Pilih Kelas:</label>
@@ -591,11 +590,12 @@
     </main>
 
     <script>
-        // KONFIGURASI FIREBASE REALTIME DATABASE LANGSUNG DIPASANG DI KODE
+        // FIREBASE REALTIME DATABASE CONFIGURATION
         const FIREBASE_CONFIG = {
             databaseURL: "https://smpn3besuki-jurnal-default-rtdb.asia-southeast1.firebasedatabase.app"
         };
 
+        // STYLE AKSI WARNA BLOK PER HARI
         const DAY_COLOR_CLASSES = {
             'SENIN': 'bg-blue-600 text-white font-extrabold border-blue-700 shadow-sm',
             'SELASA': 'bg-emerald-600 text-white font-extrabold border-emerald-700 shadow-sm',
@@ -605,11 +605,11 @@
         };
 
         const DAY_ROW_CLASSES = {
-            'SENIN': 'bg-blue-100/70 hover:bg-blue-200/80 text-blue-950',
-            'SELASA': 'bg-emerald-100/70 hover:bg-emerald-200/80 text-emerald-950',
-            'RABU': 'bg-amber-100/70 hover:bg-amber-200/80 text-amber-950',
-            'KAMIS': 'bg-purple-100/70 hover:bg-purple-200/80 text-purple-950',
-            'JUMAT': 'bg-rose-100/70 hover:bg-rose-200/80 text-rose-950'
+            'SENIN': 'bg-blue-50/70 hover:bg-blue-100/80 text-blue-950',
+            'SELASA': 'bg-emerald-50/70 hover:bg-emerald-100/80 text-emerald-950',
+            'RABU': 'bg-amber-50/70 hover:bg-amber-100/80 text-amber-950',
+            'KAMIS': 'bg-purple-50/70 hover:bg-purple-100/80 text-purple-950',
+            'JUMAT': 'bg-rose-50/70 hover:bg-rose-100/80 text-rose-950'
         };
 
         const DEFAULT_TEACHERS = {
@@ -658,6 +658,7 @@
         };
 
         const DEFAULT_RAW_SCHEDULE = [
+            // SENIN
             { day: 'SENIN', time: '07.05 - 07.40', period: '1', map: {'VII A':'D','VII B':'I','VII C':'M','VII D':'N','VIII A':'K','VIII B':'K','VIII C':'B','VIII D':'F','IX A':'E','IX B':'Q','IX C':'C','IX D':'H'} },
             { day: 'SENIN', time: '07.40 - 08.15', period: '2', map: {'VII A':'D','VII B':'I','VII C':'M','VII D':'N','VIII A':'K','VIII B':'K','VIII C':'B','VIII D':'F','IX A':'E','IX B':'Q','IX C':'T','IX D':'H'} },
             { day: 'SENIN', time: '08.15 - 08.50', period: '3', map: {'VII A':'D','VII B':'I','VII C':'M','VII D':'N','VIII A':'K','VIII B':'K','VIII C':'G','VIII D':'F','IX A':'E','IX B':'Q','IX C':'T','IX D':'H'} },
@@ -666,7 +667,46 @@
             { day: 'SENIN', time: '10.25 - 11.00', period: '6', map: {'VII A':'F','VII B':'M','VII C':'P','VII D':'A','VIII A':'E','VIII B':'J','VIII C':'K','VIII D':'K','IX A':'L','IX B':'O','IX C':'H','IX D':'Q'} },
             { day: 'SENIN', time: '11.00 - 11.35', period: '7', map: {'VII A':'M','VII B':'D','VII C':'P','VII D':'A','VIII A':'J','VIII B':'G','VIII C':'N','VIII D':'R','IX A':'L','IX B':'O','IX C':'I','IX D':'Q'} },
             { day: 'SENIN', time: '12.30 - 13.05', period: '8', map: {'VII A':'M','VII B':'D','VII C':'H','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'N','VIII D':'R','IX A':'O','IX B':'T','IX C':'I','IX D':'S'} },
-            { day: 'SENIN', time: '13.05 - 13.40', period: '9', map: {'VII A':'M','VII B':'D','VII C':'H','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'N','VIII D':'R','IX A':'O','IX B':'T','IX C':'I','IX D':'S'} }
+            { day: 'SENIN', time: '13.05 - 13.40', period: '9', map: {'VII A':'M','VII B':'D','VII C':'H','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'N','VIII D':'R','IX A':'O','IX B':'T','IX C':'I','IX D':'S'} },
+
+            // SELASA
+            { day: 'SELASA', time: '07.05 - 07.40', period: '1', map: {'VII A':'I','VII B':'F','VII C':'O','VII D':'D','VIII A':'R','VIII B':'J','VIII C':'T','VIII D':'N','IX A':'H','IX B':'E','IX C':'K','IX D':'K'} },
+            { day: 'SELASA', time: '07.40 - 08.15', period: '2', map: {'VII A':'I','VII B':'F','VII C':'O','VII D':'D','VIII A':'R','VIII B':'J','VIII C':'T','VIII D':'N','IX A':'H','IX B':'E','IX C':'K','IX D':'K'} },
+            { day: 'SELASA', time: '08.15 - 08.50', period: '3', map: {'VII A':'I','VII B':'F','VII C':'S','VII D':'D','VIII A':'R','VIII B':'J','VIII C':'L','VIII D':'N','IX A':'H','IX B':'B','IX C':'K','IX D':'K'} },
+            { day: 'SELASA', time: '09.15 - 09.50', period: '4', map: {'VII A':'A','VII B':'I','VII C':'S','VII D':'O','VIII A':'E','VIII B':'F','VIII C':'L','VIII D':'G','IX A':'Q','IX B':'B','IX C':'N','IX D':'T'} },
+            { day: 'SELASA', time: '09.50 - 10.25', period: '5', map: {'VII A':'A','VII B':'I','VII C':'D','VII D':'O','VIII A':'E','VIII B':'F','VIII C':'R','VIII D':'J','IX A':'Q','IX B':'H','IX C':'N','IX D':'T'} },
+            { day: 'SELASA', time: '10.25 - 11.00', period: '6', map: {'VII A':'S','VII B':'P','VII C':'D','VII D':'O','VIII A':'F','VIII B':'E','VIII C':'R','VIII D':'J','IX A':'Q','IX B':'H','IX C':'B','IX D':'C'} },
+            { day: 'SELASA', time: '11.00 - 11.35', period: '7', map: {'VII A':'S','VII B':'P','VII C':'D','VII D':'M','VIII A':'F','VIII B':'E','VIII C':'R','VIII D':'J','IX A':'O','IX B':'H','IX C':'B','IX D':'I'} },
+            { day: 'SELASA', time: '12.30 - 13.05', period: '8', map: {'VII A':'H','VII B':'F','VII C':'A','VII D':'M','VIII A':'P','VIII B':'S','VIII C':'B','VIII D':'T','IX A':'O','IX B':'N','IX C':'L','IX D':'I'} },
+            { day: 'SELASA', time: '13.05 - 13.40', period: '9', map: {'VII A':'H','VII B':'F','VII C':'A','VII D':'M','VIII A':'P','VIII B':'S','VIII C':'B','VIII D':'T','IX A':'O','IX B':'N','IX C':'L','IX D':'I'} },
+
+            // RABU
+            { day: 'RABU', time: '07.05 - 07.40', period: '1', map: {'VII A':'T','VII B':'P','VII C':'N','VII D':'I','VIII A':'F','VIII B':'E','VIII C':'J','VIII D':'L','IX A':'K','IX B':'K','IX C':'Q','IX D':'O'} },
+            { day: 'RABU', time: '07.40 - 08.15', period: '2', map: {'VII A':'T','VII B':'P','VII C':'N','VII D':'I','VIII A':'F','VIII B':'E','VIII C':'J','VIII D':'L','IX A':'K','IX B':'K','IX C':'Q','IX D':'O'} },
+            { day: 'RABU', time: '08.15 - 08.50', period: '3', map: {'VII A':'P','VII B':'M','VII C':'N','VII D':'I','VIII A':'F','VIII B':'E','VIII C':'J','VIII D':'S','IX A':'K','IX B':'K','IX C':'Q','IX D':'O'} },
+            { day: 'RABU', time: '09.15 - 09.50', period: '4', map: {'VII A':'P','VII B':'M','VII C':'I','VII D':'T','VIII A':'A','VIII B':'H','VIII C':'L','VIII D':'S','IX A':'E','IX B':'O','IX C':'B','IX D':'Q'} },
+            { day: 'RABU', time: '09.50 - 10.25', period: '5', map: {'VII A':'F','VII B':'M','VII C':'I','VII D':'T','VIII A':'A','VIII B':'H','VIII C':'L','VIII D':'J','IX A':'E','IX B':'O','IX C':'B','IX D':'Q'} },
+            { day: 'RABU', time: '10.25 - 11.00', period: '6', map: {'VII A':'F','VII B':'T','VII C':'I','VII D':'A','VIII A':'H','VIII B':'P','VIII C':'E','VIII D':'J','IX A':'C','IX B':'O','IX C':'S','IX D':'L'} },
+            { day: 'RABU', time: '11.00 - 11.35', period: '7', map: {'VII A':'N','VII B':'T','VII C':'M','VII D':'A','VIII A':'H','VIII B':'P','VIII C':'E','VIII D':'J','IX A':'D','IX B':'Q','IX C':'S','IX D':'L'} },
+            { day: 'RABU', time: '12.30 - 13.05', period: '8', map: {'VII A':'N','VII B':'A','VII C':'M','VII D':'H','VIII A':'P','VIII B':'T','VIII C':'S','VIII D':'E','IX A':'D','IX B':'Q','IX C':'L','IX D':'B'} },
+            { day: 'RABU', time: '13.05 - 13.40', period: '9', map: {'VII A':'N','VII B':'A','VII C':'M','VII D':'H','VIII A':'P','VIII B':'T','VIII C':'S','VIII D':'E','IX A':'D','IX B':'Q','IX C':'L','IX D':'B'} },
+
+            // KAMIS
+            { day: 'KAMIS', time: '07.05 - 07.40', period: '1', map: {'VII A':'M','VII B':'K','VII C':'P','VII D':'K','VIII A':'N','VIII B':'F','VIII C':'J','VIII D':'B','IX A':'L','IX B':'E','IX C':'Q','IX D':'D'} },
+            { day: 'KAMIS', time: '07.40 - 08.15', period: '2', map: {'VII A':'M','VII B':'K','VII C':'P','VII D':'K','VIII A':'N','VIII B':'F','VIII C':'J','VIII D':'B','IX A':'L','IX B':'E','IX C':'Q','IX D':'D'} },
+            { day: 'KAMIS', time: '08.15 - 08.50', period: '3', map: {'VII A':'M','VII B':'K','VII C':'O','VII D':'K','VIII A':'N','VIII B':'F','VIII C':'J','VIII D':'H','IX A':'T','IX B':'E','IX C':'Q','IX D':'D'} },
+            { day: 'KAMIS', time: '09.15 - 09.50', period: '4', map: {'VII A':'I','VII B':'N','VII C':'O','VII D':'M','VIII A':'S','VIII B':'R','VIII C':'E','VIII D':'H','IX A':'T','IX B':'B','IX C':'D','IX D':'L'} },
+            { day: 'KAMIS', time: '09.50 - 10.25', period: '5', map: {'VII A':'I','VII B':'N','VII C':'O','VII D':'M','VIII A':'S','VIII B':'R','VIII C':'E','VIII D':'F','IX A':'Q','IX B':'B','IX C':'D','IX D':'L'} },
+            { day: 'KAMIS', time: '10.25 - 11.00', period: '6', map: {'VII A':'A','VII B':'N','VII C':'I','VII D':'M','VIII A':'T','VIII B':'R','VIII C':'E','VIII D':'F','IX A':'Q','IX B':'S','IX C':'D','IX D':'B'} },
+            { day: 'KAMIS', time: '11.00 - 11.35', period: '7', map: {'VII A':'A','VII B':'G','VII C':'I','VII D':'C','VIII A':'T','VIII B':'N','VIII C':'F','VIII D':'E','IX A':'Q','IX B':'S','IX C':'O','IX D':'B'} },
+            { day: 'KAMIS', time: '12.30 - 13.05', period: '8', map: {'VII A':'P','VII B':'H','VII C':'T','VII D':'I','VIII A':'A','VIII B':'N','VIII C':'F','VIII D':'E','IX A':'S','IX B':'L','IX C':'O','IX D':'Q'} },
+            { day: 'KAMIS', time: '13.05 - 13.40', period: '9', map: {'VII A':'P','VII B':'H','VII C':'T','VII D':'I','VIII A':'A','VIII B':'N','VIII C':'F','VIII D':'E','IX A':'S','IX B':'L','IX C':'O','IX D':'Q'} },
+
+            // JUMAT
+            { day: 'JUMAT', time: '07.40 - 08.15', period: '2', map: {'VII A':'K','VII B':'S','VII C':'K','VII D':'P','VIII A':'G','VIII B':'A','VIII C':'H','VIII D':'L','IX A':'B','IX B':'C','IX C':'O','IX D':'N'} },
+            { day: 'JUMAT', time: '08.15 - 08.50', period: '3', map: {'VII A':'K','VII B':'S','VII C':'K','VII D':'P','VIII A':'J','VIII B':'A','VIII C':'H','VIII D':'L','IX A':'B','IX B':'D','IX C':'O','IX D':'N'} },
+            { day: 'JUMAT', time: '09.35 - 10.10', period: '4', map: {'VII A':'K','VII B':'A','VII C':'K','VII D':'S','VIII A':'J','VIII B':'P','VIII C':'F','VIII D':'B','IX A':'N','IX B':'D','IX C':'I','IX D':'O'} },
+            { day: 'JUMAT', time: '10.10 - 10.45', period: '5', map: {'VII A':'G','VII B':'A','VII C':'C','VII D':'S','VIII A':'J','VIII B':'P','VIII C':'F','VIII D':'B','IX A':'N','IX B':'D','IX C':'I','IX D':'O'} }
         ];
 
         function formatTimeStr(timeStr) {
@@ -687,7 +727,7 @@
             return 0;
         }
 
-        // State Database & Fallback
+        // State Database & Storage
         let activeTahunPelajaran = localStorage.getItem('smpn3_tahun_pelajaran') || '2026/2027';
         let TEACHERS = JSON.parse(localStorage.getItem('smpn3_teachers_db')) || DEFAULT_TEACHERS;
         let HOMEROOMS = JSON.parse(localStorage.getItem('smpn3_homerooms_db')) || DEFAULT_HOMEROOMS;
@@ -709,7 +749,7 @@
             document.getElementById('print-date-today').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         });
 
-        // INISIALISASI FIREBASE LANGSUNG TERHUBUNG AUTOMATIS
+        // KONEKSI REALTIME FIREBASE
         function initDirectFirebaseConnection() {
             const iconStatus = document.getElementById('icon-cloud-status');
             const textStatus = document.getElementById('text-cloud-status');
@@ -723,7 +763,6 @@
                 iconStatus.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
                 textStatus.innerText = "Cloud Online";
 
-                // Listeners Realtime Sinkronisasi Otomatis
                 firebaseDbRef.child('students_db').on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         STUDENTS_DB = snapshot.val();
@@ -752,7 +791,7 @@
                 });
 
             } catch (e) {
-                console.warn("Firebase offline or error, using local storage fallback:", e);
+                console.warn("Firebase offline or fallback to local:", e);
                 iconStatus.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
                 textStatus.innerText = "Cloud Local";
             }
@@ -811,7 +850,7 @@
                     
                     parseAndApplyExcelSchedule(rows);
                     closeUploadModal();
-                    alert(`🎉 Berhasil memperbarui jadwal mengajar TP ${activeTahunPelajaran}! Data telah disinkronkan ke Cloud.`);
+                    alert(`🎉 Berhasil memperbarui jadwal mengajar TP ${activeTahunPelajaran}! Data disinkronkan ke Cloud.`);
                 } catch (err) {
                     alert('❌ Gagal membaca file Excel. Pastikan file sesuai format.');
                     console.error(err);
@@ -1082,6 +1121,7 @@
             });
         }
 
+        // RENDER JADWAL GURU (BLOK WARNA & NAMA HARI TERGABUNG 1 KALI)
         function renderTeacherSchedule() {
             const guruCode = document.getElementById('select-guru-filter').value;
             const selectedDay = document.getElementById('select-hari-guru') ? document.getElementById('select-hari-guru').value : 'SEMUA';
@@ -1175,7 +1215,7 @@
                 if (isFirstRowOfDay) {
                     renderedDays.add(item.day);
                     const count = dayCounts[item.day];
-                    dayTdHTML = `<td rowspan="${count}" class="p-2.5 text-center align-middle bg-white/60 backdrop-blur-sm border-r border-slate-300/80 font-bold">
+                    dayTdHTML = `<td rowspan="${count}" class="p-2.5 text-center align-middle bg-white/80 backdrop-blur-sm border-r border-slate-300/80 font-bold">
                         <span class="inline-block px-3 py-1.5 rounded-xl border shadow-sm text-xs ${dayBadgeClass}">${item.day}</span>
                     </td>`;
                 }
@@ -1197,6 +1237,7 @@
             lucide.createIcons();
         }
 
+        // RENDER JADWAL SISWA / KELAS (BLOK WARNA & NAMA HARI TERGABUNG 1 KALI)
         function renderClassSchedule() {
             const selectedClass = document.getElementById('select-kelas-filter').value;
             const selectedDay = document.getElementById('select-hari-kelas').value;
@@ -1259,6 +1300,11 @@
                 });
             });
 
+            if (scheduleList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 font-medium">Tidak ada jadwal untuk kelas ini.</td></tr>`;
+                return;
+            }
+
             const dayCounts = {};
             scheduleList.forEach(item => {
                 dayCounts[item.day] = (dayCounts[item.day] || 0) + 1;
@@ -1280,7 +1326,7 @@
                 if (isFirstRowOfDay) {
                     renderedDays.add(item.day);
                     const count = dayCounts[item.day];
-                    dayTdHTML = `<td rowspan="${count}" class="p-2.5 border-r border-slate-300/80 align-middle bg-white/60 backdrop-blur-sm font-bold">
+                    dayTdHTML = `<td rowspan="${count}" class="p-2.5 border-r border-slate-300/80 align-middle bg-white/80 backdrop-blur-sm font-bold">
                         <span class="inline-block px-2.5 py-1 rounded-xl border text-[10px] shadow-sm ${dayBadgeClass}">${item.day}</span>
                     </td>`;
                 }
