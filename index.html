@@ -77,6 +77,9 @@
                 <button onclick="switchTab('jadwal-kelas')" id="btn-jadwal-kelas" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
                     <i data-lucide="layout-grid" class="w-4 h-4"></i> Jadwal Kelas
                 </button>
+                <button onclick="switchTab('data-siswa')" id="btn-data-siswa" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
+                    <i data-lucide="users-round" class="w-4 h-4"></i> Data Siswa
+                </button>
                 <button onclick="switchTab('jurnal-rekap')" id="btn-jurnal-rekap" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-950 hover:bg-indigo-800 text-indigo-200 font-medium shrink-0 transition active:scale-95">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Rekap Jurnal
                 </button>
@@ -323,6 +326,64 @@
             </div>
         </section>
 
+        <!-- TAB DATA SISWA -->
+        <section id="tab-data-siswa" class="tab-content hidden space-y-3">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="users-round" class="w-5 h-5 text-indigo-600"></i> Kelola Data Siswa Per Kelas
+                        </h2>
+                        <p class="text-[11px] text-slate-500">Input manual atau tempel (paste) daftar nama siswa. Nomor urut diisi otomatis.</p>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <label class="text-xs font-semibold text-slate-600 shrink-0">Pilih Kelas:</label>
+                        <select id="select-kelas-siswa-admin" onchange="renderStudentAdminTable()" class="w-full sm:w-auto border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-indigo-900 bg-slate-50 focus:ring-2 focus:ring-indigo-500">
+                            <!-- Filled dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Input / Paste Area -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <label class="block text-xs font-bold text-slate-700">Tempel / Input Daftar Nama Siswa (1 Nama Per Baris)</label>
+                        <textarea id="textarea-paste-siswa" rows="8" placeholder="Contoh:&#10;Ahmad Dahlan&#10;Budi Santoso&#10;Citra Kirana&#10;Dedi Mizwar" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-mono focus:ring-2 focus:ring-indigo-500"></textarea>
+                        <div class="flex items-center justify-between pt-1">
+                            <button onclick="clearPasteTextarea()" class="text-xs text-slate-500 hover:text-slate-700 font-semibold">Bersihkan Teks</button>
+                            <button onclick="savePastedStudents()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 transition active:scale-95">
+                                <i data-lucide="save" class="w-3.5 h-3.5"></i> Simpan Data Siswa
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Student List Table -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xs font-bold text-slate-800" id="label-info-jumlah-siswa">Daftar Siswa Kelas</h3>
+                            <button onclick="clearCurrentClassStudents()" class="text-[11px] text-rose-600 hover:underline font-bold flex items-center gap-1">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i> Kosongkan Kelas Ini
+                            </button>
+                        </div>
+                        <div class="border rounded-2xl overflow-hidden max-h-[280px] overflow-y-auto touch-scroll bg-white">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-slate-800 text-white font-bold sticky top-0">
+                                    <tr>
+                                        <th class="p-2 w-12 text-center">NO</th>
+                                        <th class="p-2">NAMA SISWA</th>
+                                        <th class="p-2 w-16 text-center">AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-admin-siswa" class="divide-y divide-slate-100">
+                                    <!-- Filled dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- TAB 4: INPUT JURNAL MENGAJAR -->
         <section id="tab-jurnal-input" class="tab-content hidden space-y-3">
             <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -331,7 +392,7 @@
                         <h2 class="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
                             <i data-lucide="edit-3" class="w-5 h-5 text-indigo-600"></i> Form Jurnal Mengajar Harian
                         </h2>
-                        <p class="text-[11px] text-slate-500">Isi materi & presensi siswa untuk jam mengajar terpilih</p>
+                        <p class="text-[11px] text-slate-500">Isi materi & presensi siswa otomatis terhubung dengan data siswa</p>
                     </div>
                     <button onclick="switchTab('jadwal-guru')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1 transition">
                         <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Kembali
@@ -353,7 +414,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1">Kelas</label>
-                            <select id="jurnal-kelas" required class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
+                            <select id="jurnal-kelas" required onchange="loadStudentsForJournal()" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-indigo-500">
                                 <!-- Classes -->
                             </select>
                         </div>
@@ -384,32 +445,61 @@
                         </div>
                     </div>
 
-                    <!-- Row 3: Presensi Siswa -->
-                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                        <h3 class="text-xs font-bold text-slate-700 mb-2 flex items-center gap-1">
-                            <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i> Kehadiran Siswa
-                        </h3>
+                    <!-- Row 3: Presensi Siswa Otomatis Per Nama -->
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
+                            <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <i data-lucide="user-check" class="w-4 h-4 text-emerald-600"></i> Presensi Siswa Per Nama (Otomatis Terhitung)
+                            </h3>
+                            <button type="button" onclick="setAllAttendance('H')" class="text-[11px] bg-emerald-100 text-emerald-800 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-bold border border-emerald-300 transition">
+                                Set Semua Hadir (H)
+                            </button>
+                        </div>
+
+                        <!-- Summary Counter Cards -->
                         <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-                            <div>
-                                <label class="block text-[11px] text-slate-600 mb-0.5">Hadir</label>
-                                <input type="number" id="jurnal-hadir" value="30" class="w-full border border-slate-300 rounded-xl p-2 font-bold text-emerald-700 text-xs">
+                            <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+                                <span class="text-[10px] text-emerald-700 font-bold block">Hadir</span>
+                                <input type="number" id="jurnal-hadir" value="0" readonly class="w-full bg-transparent text-center font-black text-emerald-800 text-base">
                             </div>
-                            <div>
-                                <label class="block text-[11px] text-slate-600 mb-0.5">Sakit (S)</label>
-                                <input type="number" id="jurnal-sakit" value="0" class="w-full border border-slate-300 rounded-xl p-2 font-bold text-amber-600 text-xs">
+                            <div class="p-2 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                                <span class="text-[10px] text-amber-700 font-bold block">Sakit (S)</span>
+                                <input type="number" id="jurnal-sakit" value="0" readonly class="w-full bg-transparent text-center font-black text-amber-800 text-base">
                             </div>
-                            <div>
-                                <label class="block text-[11px] text-slate-600 mb-0.5">Izin (I)</label>
-                                <input type="number" id="jurnal-izin" value="0" class="w-full border border-slate-300 rounded-xl p-2 font-bold text-blue-600 text-xs">
+                            <div class="p-2 bg-blue-50 border border-blue-200 rounded-xl text-center">
+                                <span class="text-[10px] text-blue-700 font-bold block">Izin (I)</span>
+                                <input type="number" id="jurnal-izin" value="0" readonly class="w-full bg-transparent text-center font-black text-blue-800 text-base">
                             </div>
-                            <div>
-                                <label class="block text-[11px] text-slate-600 mb-0.5">Alpha (A)</label>
-                                <input type="number" id="jurnal-alpha" value="0" class="w-full border border-slate-300 rounded-xl p-2 font-bold text-rose-600 text-xs">
+                            <div class="p-2 bg-rose-50 border border-rose-200 rounded-xl text-center">
+                                <span class="text-[10px] text-rose-700 font-bold block">Alpha (A)</span>
+                                <input type="number" id="jurnal-alpha" value="0" readonly class="w-full bg-transparent text-center font-black text-rose-800 text-base">
                             </div>
-                            <div class="col-span-2 sm:col-span-1">
-                                <label class="block text-[11px] text-slate-600 mb-0.5">Siswa Absen</label>
-                                <input type="text" id="jurnal-absen-detail" placeholder="Nihil / Nama" class="w-full border border-slate-300 rounded-xl p-2 text-xs">
+                            <div class="col-span-2 sm:col-span-1 p-2 bg-slate-100 border border-slate-300 rounded-xl text-center">
+                                <span class="text-[10px] text-slate-600 font-bold block">Total Siswa</span>
+                                <span id="label-total-siswa-kelas" class="font-black text-slate-800 text-base block mt-0.5">0</span>
                             </div>
+                        </div>
+
+                        <!-- Auto-generated Absent Detail string -->
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Rincian Siswa Tidak Hadir (Otomatis Terisi):</label>
+                            <input type="text" id="jurnal-absen-detail" placeholder="Nihil" readonly class="w-full border border-slate-300 rounded-xl p-2 text-xs font-medium bg-slate-100 text-slate-800">
+                        </div>
+
+                        <!-- Interactive Student List for Attendance -->
+                        <div class="border rounded-2xl overflow-hidden max-h-[260px] overflow-y-auto touch-scroll bg-white">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-slate-800 text-white font-bold sticky top-0">
+                                    <tr>
+                                        <th class="p-2 w-10 text-center">NO</th>
+                                        <th class="p-2">NAMA SISWA</th>
+                                        <th class="p-2 w-48 text-center">STATUS KEHADIRAN</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-presensi-siswa" class="divide-y divide-slate-100">
+                                    <!-- Dynamic Rows per student -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -495,16 +585,17 @@
 
                 <!-- Table Rekap -->
                 <div class="overflow-x-auto touch-scroll">
-                    <table class="w-full text-xs text-left border-collapse border border-slate-300 min-w-[600px]">
+                    <table class="w-full text-xs text-left border-collapse border border-slate-300 min-w-[650px]">
                         <thead>
                             <tr class="bg-slate-100 text-slate-800 text-center font-bold">
                                 <th class="p-1.5 border border-slate-300 w-8">NO</th>
                                 <th class="p-1.5 border border-slate-300 w-20">TANGGAL</th>
                                 <th class="p-1.5 border border-slate-300 w-32">GURU & MAPEL</th>
                                 <th class="p-1.5 border border-slate-300 w-14">KELAS</th>
-                                <th class="p-1.5 border border-slate-300 w-20">JAM KE</th>
+                                <th class="p-1.5 border border-slate-300 w-16">JAM KE</th>
                                 <th class="p-1.5 border border-slate-300">MATERI</th>
-                                <th class="p-1.5 border border-slate-300 w-20">PRESENSI</th>
+                                <th class="p-1.5 border border-slate-300 w-28">METODE</th>
+                                <th class="p-1.5 border border-slate-300 w-24">PRESENSI</th>
                                 <th class="p-1.5 border border-slate-300">CATATAN</th>
                                 <th class="p-1.5 border border-slate-300 w-10 no-print">AKSI</th>
                             </tr>
@@ -590,6 +681,16 @@
             'IX A': 'H', 'IX B': 'D', 'IX C': 'Q', 'IX D': 'O'
         };
 
+        const DEFAULT_STUDENTS_DB = {
+            'VII A': [
+                { no: 1, nama: 'Ahmad Dahlan' }, { no: 2, nama: 'Budi Santoso' }, { no: 3, nama: 'Citra Kirana' },
+                { no: 4, nama: 'Dedi Mizwar' }, { no: 5, nama: 'Eka Kurniawan' }
+            ],
+            'VII B': [
+                { no: 1, nama: 'Fajar Nugraha' }, { no: 2, nama: 'Gita Gutawa' }, { no: 3, nama: 'Hendra Setiawan' }
+            ]
+        };
+
         const DEFAULT_RAW_SCHEDULE = [
             // SENIN
             { day: 'SENIN', time: '07.05 - 07.40', period: '1', map: {'VII A':'D','VII B':'I','VII C':'M','VII D':'N','VIII A':'K','VIII B':'K','VIII C':'B','VIII D':'F','IX A':'E','IX B':'Q','IX C':'C','IX D':'H'} },
@@ -660,11 +761,15 @@
             return 0;
         }
 
-        // Active State
+        // Active State & Persistent Storage
         let activeTahunPelajaran = localStorage.getItem('smpn3_tahun_pelajaran') || '2026/2027';
         let TEACHERS = JSON.parse(localStorage.getItem('smpn3_teachers_db')) || DEFAULT_TEACHERS;
         let HOMEROOMS = JSON.parse(localStorage.getItem('smpn3_homerooms_db')) || DEFAULT_HOMEROOMS;
         let RAW_SCHEDULE = JSON.parse(localStorage.getItem('smpn3_schedule_db')) || DEFAULT_RAW_SCHEDULE;
+        let STUDENTS_DB = JSON.parse(localStorage.getItem('smpn3_students_db')) || DEFAULT_STUDENTS_DB;
+
+        // Current Active Student List in Journal Form
+        let currentJournalStudents = [];
 
         // Journal Entries Storage
         let journalEntries = JSON.parse(localStorage.getItem('smpn3_jurnal_db')) || [
@@ -675,12 +780,12 @@
                 guruName: 'Dra. Suprihatin',
                 mapel: 'IPS',
                 kelas: 'VII A',
-                jam: 'Jam 4 (09.15 - 09.50)',
+                jam: '1 (07.05 - 07.40)',
                 status: 'Hadir (Tatap Muka)',
                 materi: 'Keberagaman Lingkungan Sekitar dan Interaksi Sosial',
                 metode: 'Diskusi Kelompok & Peta Konsep',
-                hadir: 31, sakit: 1, izin: 0, alpha: 0,
-                detailAbsen: 'Sakit: Ahmad (No. 03)',
+                hadir: 4, sakit: 1, izin: 0, alpha: 0,
+                detailAbsen: 'Sakit: Budi Santoso (02)',
                 catatan: 'Siswa aktif berdiskusi kelompok, tugas LKS selesai tepat waktu.'
             }
         ];
@@ -712,6 +817,8 @@
             renderMasterSchedule();
             renderTeacherSchedule();
             renderClassSchedule();
+            renderStudentAdminTable();
+            loadStudentsForJournal();
             renderRekapJurnal();
             updateSemesterDisplay();
         }
@@ -925,8 +1032,11 @@
         function populateClassSelects() {
             const selectFilter = document.getElementById('select-kelas-filter');
             const selectJurnal = document.getElementById('jurnal-kelas');
+            const selectAdminSiswa = document.getElementById('select-kelas-siswa-admin');
+
             selectFilter.innerHTML = '';
             selectJurnal.innerHTML = '';
+            selectAdminSiswa.innerHTML = '';
 
             CLASSES.forEach(c => {
                 const opt1 = document.createElement('option');
@@ -938,6 +1048,11 @@
                 opt2.value = c;
                 opt2.textContent = `Kelas ${c}`;
                 selectJurnal.appendChild(opt2);
+
+                const opt3 = document.createElement('option');
+                opt3.value = c;
+                opt3.textContent = `Kelas ${c}`;
+                selectAdminSiswa.appendChild(opt3);
             });
         }
 
@@ -998,7 +1113,6 @@
             });
         }
 
-        // Render Tab 2: Teacher Schedule (Urut Kronologis Jam ke Bawah, Tanpa Teks 'Jam')
         function renderTeacherSchedule() {
             const guruCode = document.getElementById('select-guru-filter').value;
             const selectedDay = document.getElementById('select-hari-guru') ? document.getElementById('select-hari-guru').value : 'SEMUA';
@@ -1013,7 +1127,6 @@
             days.forEach(day => {
                 const dayRows = RAW_SCHEDULE.filter(r => r.day === day);
                 
-                // Ambil seluruh slot mengajar guru pada hari ini
                 const teacherSlots = [];
                 dayRows.forEach(row => {
                     CLASSES.forEach(cls => {
@@ -1028,7 +1141,6 @@
                     });
                 });
 
-                // Urutkan slot mengajar secara kronologis berdasarkan Jam Ke & Waktu
                 teacherSlots.sort((a, b) => {
                     const pA = parseInt(a.period, 10) || 0;
                     const pB = parseInt(b.period, 10) || 0;
@@ -1036,7 +1148,6 @@
                     return parseMinutesFromTimeStr(a.time) - parseMinutesFromTimeStr(b.time);
                 });
 
-                // Tampilkan setiap jam ke secara berurutan baris demi baris ke bawah
                 teacherSlots.forEach(slot => {
                     totalJP++;
                     if (selectedDay === 'SEMUA' || selectedDay === day) {
@@ -1052,7 +1163,6 @@
                 });
             });
 
-            // Update Info Card Guru
             const isWali = Object.keys(HOMEROOMS).find(k => HOMEROOMS[k] === guruCode);
             document.getElementById('teacher-info-card').innerHTML = `
                 <div class="flex items-center gap-3">
@@ -1075,7 +1185,6 @@
                 return;
             }
 
-            // Hitung jumlah baris per hari untuk Rowspan
             const dayCounts = {};
             scheduleList.forEach(item => {
                 dayCounts[item.day] = (dayCounts[item.day] || 0) + 1;
@@ -1109,7 +1218,7 @@
                     <td class="p-2.5 text-center"><span class="bg-indigo-900 text-white font-bold px-2.5 py-1 rounded-xl text-[11px] whitespace-nowrap shadow-sm">Kelas ${item.kelas}</span></td>
                     <td class="p-2.5 font-bold text-slate-800 text-left">${item.subject}</td>
                     <td class="p-2.5 text-center">
-                        <button onclick="prepareJournalFromSchedule('${guruCode}', '${item.kelas}', 'Jam ${item.period} (${formatTimeStr(item.time)})')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 mx-auto transition active:scale-95 shadow">
+                        <button onclick="prepareJournalFromSchedule('${guruCode}', '${item.kelas}', '${item.period} (${formatTimeStr(item.time)})')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 mx-auto transition active:scale-95 shadow">
                             <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Isi Jurnal
                         </button>
                     </td>
@@ -1119,7 +1228,6 @@
             lucide.createIcons();
         }
 
-        // Render Tab 3: Class Schedule (Urut Kronologis Jam ke Bawah, Tanpa Teks 'Jam')
         function renderClassSchedule() {
             const selectedClass = document.getElementById('select-kelas-filter').value;
             const selectedDay = document.getElementById('select-hari-kelas').value;
@@ -1161,7 +1269,6 @@
                     });
                 });
 
-                // Urutkan slot kelas secara kronologis berdasarkan Jam Ke & Waktu
                 classSlots.sort((a, b) => {
                     const pA = parseInt(a.period, 10) || 0;
                     const pB = parseInt(b.period, 10) || 0;
@@ -1169,7 +1276,6 @@
                     return parseMinutesFromTimeStr(a.time) - parseMinutesFromTimeStr(b.time);
                 });
 
-                // Tampilkan setiap jam pelajaran berurutan baris demi baris ke bawah
                 classSlots.forEach(slot => {
                     const cleanPeriod = String(slot.period).replace(/Jam/gi, '').trim();
                     const teacher = TEACHERS[slot.code];
@@ -1184,7 +1290,6 @@
                 });
             });
 
-            // Hitung jumlah baris per hari untuk Rowspan
             const dayCounts = {};
             scheduleList.forEach(item => {
                 dayCounts[item.day] = (dayCounts[item.day] || 0) + 1;
@@ -1220,6 +1325,184 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        // TAB DATA SISWA: LOGIC
+        function renderStudentAdminTable() {
+            const cls = document.getElementById('select-kelas-siswa-admin').value;
+            const tbody = document.getElementById('tbody-admin-siswa');
+            tbody.innerHTML = '';
+
+            const studentList = STUDENTS_DB[cls] || [];
+            document.getElementById('label-info-jumlah-siswa').innerText = `Daftar Siswa Kelas ${cls} (${studentList.length} Siswa)`;
+
+            if (studentList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-400">Belum ada data siswa untuk Kelas ${cls}. Silakan tempel daftar nama di sebelah kiri.</td></tr>`;
+                return;
+            }
+
+            studentList.forEach((s, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b";
+                tr.innerHTML = `
+                    <td class="p-2 text-center font-bold text-slate-600">${idx + 1}</td>
+                    <td class="p-2 font-bold text-slate-800">${s.nama}</td>
+                    <td class="p-2 text-center">
+                        <button onclick="deleteSingleStudent('${cls}', ${idx})" class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Hapus Siswa">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function savePastedStudents() {
+            const cls = document.getElementById('select-kelas-siswa-admin').value;
+            const text = document.getElementById('textarea-paste-siswa').value.trim();
+
+            if (!text) {
+                alert('⚠️ Silakan tempelkan atau tulis daftar nama siswa terlebih dahulu.');
+                return;
+            }
+
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            
+            if (lines.length === 0) return;
+
+            const newStudents = lines.map((nama, idx) => ({
+                no: idx + 1,
+                nama: nama
+            }));
+
+            STUDENTS_DB[cls] = newStudents;
+            localStorage.setItem('smpn3_students_db', JSON.stringify(STUDENTS_DB));
+
+            alert(`✅ Berhasil menyimpan ${newStudents.length} siswa untuk Kelas ${cls}!`);
+            document.getElementById('textarea-paste-siswa').value = '';
+            renderStudentAdminTable();
+            loadStudentsForJournal();
+        }
+
+        function clearPasteTextarea() {
+            document.getElementById('textarea-paste-siswa').value = '';
+        }
+
+        function deleteSingleStudent(cls, idx) {
+            if (STUDENTS_DB[cls]) {
+                STUDENTS_DB[cls].splice(idx, 1);
+                STUDENTS_DB[cls] = STUDENTS_DB[cls].map((s, i) => ({ no: i + 1, nama: s.nama }));
+                localStorage.setItem('smpn3_students_db', JSON.stringify(STUDENTS_DB));
+                renderStudentAdminTable();
+                loadStudentsForJournal();
+            }
+        }
+
+        function clearCurrentClassStudents() {
+            const cls = document.getElementById('select-kelas-siswa-admin').value;
+            if (confirm(`Kosongkan seluruh data siswa untuk Kelas ${cls}?`)) {
+                STUDENTS_DB[cls] = [];
+                localStorage.setItem('smpn3_students_db', JSON.stringify(STUDENTS_DB));
+                renderStudentAdminTable();
+                loadStudentsForJournal();
+            }
+        }
+
+        // LOAD STUDENTS INTO JOURNAL FORM
+        function loadStudentsForJournal() {
+            const selectedClass = document.getElementById('jurnal-kelas').value;
+            const rawList = STUDENTS_DB[selectedClass] || [];
+            const tbody = document.getElementById('tbody-presensi-siswa');
+            tbody.innerHTML = '';
+
+            currentJournalStudents = rawList.map(s => ({
+                no: s.no,
+                nama: s.nama,
+                status: 'H'
+            }));
+
+            document.getElementById('label-total-siswa-kelas').innerText = currentJournalStudents.length;
+
+            if (currentJournalStudents.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-400">Belum ada data nama siswa untuk Kelas ${selectedClass}. Tambahkan di Tab <b>Data Siswa</b>.</td></tr>`;
+                calculateJournalAttendanceSummary();
+                return;
+            }
+
+            currentJournalStudents.forEach((s) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b";
+                tr.innerHTML = `
+                    <td class="p-2 text-center font-bold text-slate-600">${s.no}</td>
+                    <td class="p-2 font-bold text-slate-800">${s.nama}</td>
+                    <td class="p-2 text-center">
+                        <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs gap-1">
+                            <button type="button" onclick="setIndividualAttendance(${s.no}, 'H')" id="btn-att-${s.no}-H" class="px-2 py-0.5 rounded-lg font-bold bg-emerald-600 text-white shadow-sm transition">H</button>
+                            <button type="button" onclick="setIndividualAttendance(${s.no}, 'S')" id="btn-att-${s.no}-S" class="px-2 py-0.5 rounded-lg font-bold text-slate-600 hover:bg-amber-500 hover:text-white transition">S</button>
+                            <button type="button" onclick="setIndividualAttendance(${s.no}, 'I')" id="btn-att-${s.no}-I" class="px-2 py-0.5 rounded-lg font-bold text-slate-600 hover:bg-blue-500 hover:text-white transition">I</button>
+                            <button type="button" onclick="setIndividualAttendance(${s.no}, 'A')" id="btn-att-${s.no}-A" class="px-2 py-0.5 rounded-lg font-bold text-slate-600 hover:bg-rose-600 hover:text-white transition">A</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            calculateJournalAttendanceSummary();
+        }
+
+        function setIndividualAttendance(studentNo, status) {
+            const student = currentJournalStudents.find(s => s.no === studentNo);
+            if (student) {
+                student.status = status;
+                
+                ['H', 'S', 'I', 'A'].forEach(st => {
+                    const btn = document.getElementById(`btn-att-${studentNo}-${st}`);
+                    if (btn) {
+                        if (st === status) {
+                            if (st === 'H') btn.className = "px-2 py-0.5 rounded-lg font-bold bg-emerald-600 text-white shadow-sm transition";
+                            if (st === 'S') btn.className = "px-2 py-0.5 rounded-lg font-bold bg-amber-500 text-white shadow-sm transition";
+                            if (st === 'I') btn.className = "px-2 py-0.5 rounded-lg font-bold bg-blue-600 text-white shadow-sm transition";
+                            if (st === 'A') btn.className = "px-2 py-0.5 rounded-lg font-bold bg-rose-600 text-white shadow-sm transition";
+                        } else {
+                            btn.className = "px-2 py-0.5 rounded-lg font-bold text-slate-600 hover:bg-slate-200 transition";
+                        }
+                    }
+                });
+
+                calculateJournalAttendanceSummary();
+            }
+        }
+
+        function setAllAttendance(status) {
+            currentJournalStudents.forEach(s => {
+                setIndividualAttendance(s.no, status);
+            });
+        }
+
+        function calculateJournalAttendanceSummary() {
+            let countH = 0, countS = 0, countI = 0, countA = 0;
+            const namesS = [], namesI = [], namesA = [];
+
+            currentJournalStudents.forEach(s => {
+                const formattedNo = String(s.no).padStart(2, '0');
+                if (s.status === 'H') countH++;
+                if (s.status === 'S') { countS++; namesS.push(`${s.nama} (${formattedNo})`); }
+                if (s.status === 'I') { countI++; namesI.push(`${s.nama} (${formattedNo})`); }
+                if (s.status === 'A') { countA++; namesA.push(`${s.nama} (${formattedNo})`); }
+            });
+
+            document.getElementById('jurnal-hadir').value = countH;
+            document.getElementById('jurnal-sakit').value = countS;
+            document.getElementById('jurnal-izin').value = countI;
+            document.getElementById('jurnal-alpha').value = countA;
+
+            const detailParts = [];
+            if (namesS.length > 0) detailParts.push(`Sakit: ${namesS.join(', ')}`);
+            if (namesI.length > 0) detailParts.push(`Izin: ${namesI.join(', ')}`);
+            if (namesA.length > 0) detailParts.push(`Alpha: ${namesA.join(', ')}`);
+
+            document.getElementById('jurnal-absen-detail').value = detailParts.length > 0 ? detailParts.join('; ') : 'Nihil';
         }
 
         function downloadClassScheduleExcel() {
@@ -1282,6 +1565,7 @@
             autoFillSubject();
             document.getElementById('jurnal-kelas').value = kelas;
             document.getElementById('jurnal-jam').value = jamStr;
+            loadStudentsForJournal();
         }
 
         function saveJournalEntry(e) {
@@ -1316,12 +1600,13 @@
             switchTab('jurnal-rekap');
         }
 
+        // RENDER REKAP JURNAL DENGAN KOLOM MATERI & METODE TERPISAH
         function renderRekapJurnal() {
             const tbody = document.getElementById('tbody-rekap-jurnal');
             tbody.innerHTML = '';
 
             if (journalEntries.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Belum ada catatan jurnal mengajar tersimpan.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="p-6 text-center text-slate-400">Belum ada catatan jurnal mengajar tersimpan.</td></tr>`;
                 return;
             }
 
@@ -1337,10 +1622,8 @@
                     </td>
                     <td class="p-1.5 border text-center font-bold text-emerald-800">${entry.kelas}</td>
                     <td class="p-1.5 border text-center font-medium text-[11px] whitespace-nowrap">${entry.jam}</td>
-                    <td class="p-1.5 border">
-                        <div class="font-semibold text-slate-800 mb-0.5 text-[11px]">${entry.materi}</div>
-                        <div class="text-[10px] text-slate-500">Metode: ${entry.metode}</div>
-                    </td>
+                    <td class="p-1.5 border font-semibold text-slate-800 text-[11px]">${entry.materi}</td>
+                    <td class="p-1.5 border text-slate-700 text-[11px]">${entry.metode || '-'}</td>
                     <td class="p-1.5 border">
                         <div class="text-[10px] space-y-0.5">
                             <div>Hadir: <b class="text-emerald-700">${entry.hadir}</b></div>
