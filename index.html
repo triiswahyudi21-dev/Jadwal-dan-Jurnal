@@ -2,7 +2,6 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <!-- Viewport Dioptimalkan untuk HP, Tablet, dan Laptop -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
     <title>Aplikasi Jadwal & Jurnal Mengajar - SMPN 3 Besuki</title>
     <!-- Tailwind CSS CDN -->
@@ -197,7 +196,7 @@
             </div>
         </section>
 
-        <!-- TAB 2: JADWAL PER GURU (BLOK WARNA & HARI TERGABUNG) -->
+        <!-- TAB 2: JADWAL PER GURU -->
         <section id="tab-jadwal-guru" class="tab-content hidden space-y-3">
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                 <div>
@@ -249,7 +248,7 @@
             </div>
         </section>
 
-        <!-- TAB 3: JADWAL SISWA / KELAS (BLOK WARNA & HARI TERGABUNG) -->
+        <!-- TAB 3: JADWAL SISWA / KELAS -->
         <section id="tab-jadwal-kelas" class="tab-content hidden space-y-3">
             <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3">
                 <div>
@@ -590,10 +589,18 @@
     </main>
 
     <script>
-        // FIREBASE REALTIME DATABASE CONFIGURATION
-        const FIREBASE_CONFIG = {
-            databaseURL: "https://smpn3besuki-jurnal-default-rtdb.asia-southeast1.firebasedatabase.app"
-        };
+        // KONFIGURASI LENGKAP FIREBASE CLOUD REALTIME DATABASE
+        // Silakan ganti apiKey, authDomain, projectId, storageBucket, dan appId dengan data dari Firebase Console Anda jika diperlukan.
+      const firebaseConfig = {
+  apiKey: "AIzaSyDvgo-pIAkS3HdziNMjCqz3Mzmw34xM8Vw",
+  authDomain: "jadwal-plus-dbb40.firebaseapp.com",
+  databaseURL: "https://jadwal-plus-dbb40-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "jadwal-plus-dbb40",
+  storageBucket: "jadwal-plus-dbb40.firebasestorage.app",
+  messagingSenderId: "660085383586",
+  appId: "1:660085383586:web:4a94fae6d2e2b2527a12fb",
+  measurementId: "G-H7Y52MTCYP"
+};
 
         // STYLE AKSI WARNA BLOK PER HARI
         const DAY_COLOR_CLASSES = {
@@ -749,7 +756,7 @@
             document.getElementById('print-date-today').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         });
 
-        // KONEKSI REALTIME FIREBASE
+        // KONEKSI REALTIME FIREBASE LENGKAP
         function initDirectFirebaseConnection() {
             const iconStatus = document.getElementById('icon-cloud-status');
             const textStatus = document.getElementById('text-cloud-status');
@@ -770,6 +777,10 @@
                         renderStudentAdminTable();
                         loadStudentsForJournal();
                     }
+                }, (error) => {
+                    console.warn("Firebase read error:", error);
+                    iconStatus.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+                    textStatus.innerText = "Cloud Terbatas";
                 });
 
                 firebaseDbRef.child('jurnal_db').on('value', (snapshot) => {
@@ -791,7 +802,7 @@
                 });
 
             } catch (e) {
-                console.warn("Firebase offline or fallback to local:", e);
+                console.warn("Firebase fallback to local:", e);
                 iconStatus.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
                 textStatus.innerText = "Cloud Local";
             }
@@ -1121,7 +1132,7 @@
             });
         }
 
-        // RENDER JADWAL GURU (BLOK WARNA & NAMA HARI TERGABUNG 1 KALI)
+        // RENDER JADWAL GURU
         function renderTeacherSchedule() {
             const guruCode = document.getElementById('select-guru-filter').value;
             const selectedDay = document.getElementById('select-hari-guru') ? document.getElementById('select-hari-guru').value : 'SEMUA';
@@ -1237,7 +1248,7 @@
             lucide.createIcons();
         }
 
-        // RENDER JADWAL SISWA / KELAS (BLOK WARNA & NAMA HARI TERGABUNG 1 KALI)
+        // RENDER JADWAL SISWA / KELAS
         function renderClassSchedule() {
             const selectedClass = document.getElementById('select-kelas-filter').value;
             const selectedDay = document.getElementById('select-hari-kelas').value;
