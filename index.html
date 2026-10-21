@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <!-- Viewport Dioptimalkan untuk Zoom In / Out Bebas di HP -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
     <title>Aplikasi Jadwal & Jurnal Mengajar - SMPN 3 Besuki</title>
     <!-- Tailwind CSS CDN -->
@@ -10,7 +11,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- SheetJS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Firebase App & Realtime Database CDN -->
+    <!-- Firebase App & Realtime Database SDK (Compat Mode) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -39,10 +40,11 @@
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Header / Navbar -->
+    <!-- Header / Navbar Rapi -->
     <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-40 no-print">
         <div class="max-w-7xl mx-auto px-3 py-2.5 flex flex-col gap-2.5">
             
+            <!-- Top Bar: Logo & Info -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div class="p-2 bg-indigo-700 rounded-xl shadow-inner shrink-0">
@@ -58,11 +60,11 @@
                 </div>
 
                 <div class="flex items-center gap-1.5">
-                    <!-- Status Cloud Indicator -->
-                    <button onclick="openCloudModal()" id="btn-cloud-status" class="px-2.5 py-1.5 bg-indigo-800 hover:bg-indigo-700 text-xs font-bold rounded-xl flex items-center gap-1.5 shadow transition active:scale-95 border border-indigo-700">
-                        <span id="icon-cloud-status" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                        <span id="text-cloud-status" class="text-[11px] hidden sm:inline">Pengaturan Cloud</span>
-                    </button>
+                    <!-- Status Cloud Indicator (Terpasang Langsung) -->
+                    <div id="badge-cloud-status" class="px-2.5 py-1.5 bg-indigo-800/90 text-xs font-bold rounded-xl flex items-center gap-1.5 border border-indigo-700 shadow-sm">
+                        <span id="icon-cloud-status" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="text-cloud-status" class="text-[11px] font-semibold text-indigo-100">Cloud Online</span>
+                    </div>
 
                     <button onclick="openUploadModal()" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-indigo-950 font-bold rounded-xl text-xs flex items-center gap-1 shadow transition active:scale-95 shrink-0">
                         <i data-lucide="file-up" class="w-4 h-4"></i>
@@ -71,6 +73,7 @@
                 </div>
             </div>
 
+            <!-- Navigation Tabs -->
             <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs">
                 <button onclick="switchTab('jadwal-master')" id="btn-jadwal-master" class="tab-btn px-3 py-2 rounded-xl flex items-center gap-1.5 bg-indigo-600 text-white font-semibold shrink-0 transition active:scale-95">
                     <i data-lucide="calendar" class="w-4 h-4"></i> Master Jadwal
@@ -90,38 +93,6 @@
             </nav>
         </div>
     </header>
-
-    <!-- Modal Pengaturan Cloud Database -->
-    <div id="cloud-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-5 space-y-4 border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b pb-3">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="cloud-cog" class="w-5 h-5 text-indigo-600"></i>
-                    <h3 class="text-base font-bold text-slate-800">Koneksi Cloud Realtime (Firebase)</h3>
-                </div>
-                <button onclick="closeCloudModal()" class="text-slate-400 hover:text-slate-600 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-
-            <p class="text-xs text-slate-600 leading-relaxed">
-                Hubungkan ke <b>Firebase Realtime Database</b> (Gratis) agar data siswa, jurnal, dan jadwal langsung tersinkronisasi otomatis secara realtime antar seluruh HP & Laptop guru.
-            </p>
-
-            <div class="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Firebase Realtime Database URL / Config JSON:</label>
-                    <textarea id="input-firebase-config" rows="4" placeholder='{"databaseURL": "https://nama-database-default-rtdb.firebaseio.com"}' class="w-full border border-slate-300 rounded-xl p-2.5 text-xs font-mono focus:ring-2 focus:ring-indigo-500"></textarea>
-                </div>
-                <div class="flex items-center justify-between text-xs">
-                    <span id="cloud-connection-indicator" class="font-bold text-amber-600">Status: Belum Terhubung (Lokal)</span>
-                    <button onclick="saveFirebaseConfig()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition">Simpan & Hubungkan</button>
-                </div>
-            </div>
-
-            <div class="pt-2 border-t flex justify-end">
-                <button onclick="closeCloudModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl">Tutup</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Modal Upload Excel Jadwal -->
     <div id="upload-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
@@ -345,9 +316,9 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b pb-3">
                     <div>
                         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                            <i data-lucide="users-round" class="w-5 h-5 text-indigo-600"></i> Kelola Data Siswa Per Kelas (Tersimpan Online)
+                            <i data-lucide="users-round" class="w-5 h-5 text-indigo-600"></i> Kelola Data Siswa Per Kelas (Tersimpan di Cloud)
                         </h2>
-                        <p class="text-[11px] text-slate-500">Input manual atau tempel (paste) daftar nama siswa. Otomatis tersimpan ke Cloud.</p>
+                        <p class="text-[11px] text-slate-500">Input manual atau tempel (paste) daftar nama siswa. Nomor urut diisi otomatis.</p>
                     </div>
                     <div class="flex items-center gap-2 w-full sm:w-auto">
                         <label class="text-xs font-semibold text-slate-600 shrink-0">Pilih Kelas:</label>
@@ -620,6 +591,11 @@
     </main>
 
     <script>
+        // KONFIGURASI FIREBASE REALTIME DATABASE LANGSUNG DIPASANG DI KODE
+        const FIREBASE_CONFIG = {
+            databaseURL: "https://smpn3besuki-jurnal-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+
         const DAY_COLOR_CLASSES = {
             'SENIN': 'bg-blue-600 text-white font-extrabold border-blue-700 shadow-sm',
             'SELASA': 'bg-emerald-600 text-white font-extrabold border-emerald-700 shadow-sm',
@@ -711,7 +687,7 @@
             return 0;
         }
 
-        // Active State & Persistent Storage
+        // State Database & Fallback
         let activeTahunPelajaran = localStorage.getItem('smpn3_tahun_pelajaran') || '2026/2027';
         let TEACHERS = JSON.parse(localStorage.getItem('smpn3_teachers_db')) || DEFAULT_TEACHERS;
         let HOMEROOMS = JSON.parse(localStorage.getItem('smpn3_homerooms_db')) || DEFAULT_HOMEROOMS;
@@ -725,7 +701,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             updateHeaderYearDisplay();
-            initFirebaseConnection();
+            initDirectFirebaseConnection();
             refreshAllViews();
             
             const todayStr = new Date().toISOString().split('T')[0];
@@ -733,42 +709,21 @@
             document.getElementById('print-date-today').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         });
 
-        // FIREBASE CLOUD REALTIME SYNC LOGIC
-        function initFirebaseConnection() {
-            const savedConfig = localStorage.getItem('smpn3_firebase_config');
-            const statusBtn = document.getElementById('btn-cloud-status');
+        // INISIALISASI FIREBASE LANGSUNG TERHUBUNG AUTOMATIS
+        function initDirectFirebaseConnection() {
             const iconStatus = document.getElementById('icon-cloud-status');
             const textStatus = document.getElementById('text-cloud-status');
-            const indicator = document.getElementById('cloud-connection-indicator');
-
-            if (!savedConfig) {
-                iconStatus.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
-                if (textStatus) textStatus.innerText = "Cloud Off (Lokal)";
-                if (indicator) indicator.innerText = "Status: Mode Lokal (Belum Terhubung Cloud)";
-                return;
-            }
 
             try {
-                let configObj = {};
-                if (savedConfig.trim().startsWith('{')) {
-                    configObj = JSON.parse(savedConfig);
-                } else {
-                    configObj = { databaseURL: savedConfig.trim() };
-                }
-
                 if (!firebase.apps.length) {
-                    firebase.initializeApp(configObj);
+                    firebase.initializeApp(FIREBASE_CONFIG);
                 }
                 firebaseDbRef = firebase.database().ref('smpn3_besuki');
 
                 iconStatus.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
-                if (textStatus) textStatus.innerText = "Cloud Online";
-                if (indicator) {
-                    indicator.innerText = "Status: ✅ Terhubung Ke Cloud Realtime!";
-                    indicator.className = "font-bold text-emerald-600";
-                }
+                textStatus.innerText = "Cloud Online";
 
-                // Realtime Listeners
+                // Listeners Realtime Sinkronisasi Otomatis
                 firebaseDbRef.child('students_db').on('value', (snapshot) => {
                     if (snapshot.exists()) {
                         STUDENTS_DB = snapshot.val();
@@ -797,43 +752,16 @@
                 });
 
             } catch (e) {
-                console.error("Firebase Connection Error:", e);
-                iconStatus.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
-                if (textStatus) textStatus.innerText = "Cloud Error";
-                if (indicator) {
-                    indicator.innerText = "Status: ❌ Gagal Menghubungkan ke Cloud Database";
-                    indicator.className = "font-bold text-rose-600";
-                }
+                console.warn("Firebase offline or error, using local storage fallback:", e);
+                iconStatus.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+                textStatus.innerText = "Cloud Local";
             }
-        }
-
-        function saveFirebaseConfig() {
-            const configText = document.getElementById('input-firebase-config').value.trim();
-            if (!configText) {
-                localStorage.removeItem('smpn3_firebase_config');
-                alert('Mode Cloud dinonaktifkan. Menggunakan penyimpanan lokal.');
-            } else {
-                localStorage.setItem('smpn3_firebase_config', configText);
-                alert('Konfigurasi Cloud disimpan! Memuat ulang koneksi...');
-            }
-            initFirebaseConnection();
-            closeCloudModal();
         }
 
         function syncDataToCloud(key, data) {
             if (firebaseDbRef) {
                 firebaseDbRef.child(key).set(data);
             }
-        }
-
-        function openCloudModal() {
-            document.getElementById('cloud-modal').classList.remove('hidden');
-            const savedConfig = localStorage.getItem('smpn3_firebase_config') || '';
-            document.getElementById('input-firebase-config').value = savedConfig;
-        }
-
-        function closeCloudModal() {
-            document.getElementById('cloud-modal').classList.add('hidden');
         }
 
         function updateHeaderYearDisplay() {
@@ -883,7 +811,7 @@
                     
                     parseAndApplyExcelSchedule(rows);
                     closeUploadModal();
-                    alert(`🎉 Berhasil memperbarui jadwal mengajar TP ${activeTahunPelajaran}!`);
+                    alert(`🎉 Berhasil memperbarui jadwal mengajar TP ${activeTahunPelajaran}! Data telah disinkronkan ke Cloud.`);
                 } catch (err) {
                     alert('❌ Gagal membaca file Excel. Pastikan file sesuai format.');
                     console.error(err);
@@ -1638,7 +1566,7 @@
             localStorage.setItem('smpn3_jurnal_db', JSON.stringify(journalEntries));
             syncDataToCloud('jurnal_db', journalEntries);
 
-            alert('✅ Jurnal mengajar berhasil disimpan & disinkronkan!');
+            alert('✅ Jurnal mengajar berhasil disimpan & disinkronkan ke Cloud!');
             renderRekapJurnal();
             switchTab('jurnal-rekap');
         }
