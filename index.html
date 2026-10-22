@@ -1376,12 +1376,12 @@
             switchTab('jurnal-rekap');
         }
 
-        // FUNGSI PENGURUTAN JURNAL BERDASARKAN TANGGAL & JAM TERKECIL KE TERBESAR
+        // FUNGSI PENGURUTAN JURNAL BERDASARKAN TANGGAL DARI TERLAMA KE TERBARU (KRONOLOGIS)
         function sortJournalEntries() {
             journalEntries.sort((a, b) => {
-                // 1. Urutkan tanggal (terbaru ke terlama, atau sesuaikan jika ingin terlama dulu)
+                // 1. Urutkan tanggal terlama/awal ke terbaru (Ascending: 21, 22, 23, dst.)
                 if (a.tanggal !== b.tanggal) {
-                    return new Date(b.tanggal) - new Date(a.tanggal);
+                    return new Date(a.tanggal) - new Date(b.tanggal);
                 }
                 // 2. Jika tanggal sama, urutkan berdasarkan angka jam pertama (kecil ke besar)
                 const getFirstHour = (str) => {
